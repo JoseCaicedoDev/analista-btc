@@ -1,0 +1,52 @@
+@import "tailwindcss";
+
+@theme {
+  --color-slate-950: #08060d;
+  --color-slate-900: #111218;
+  --color-slate-800: #1c1d25;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  @apply bg-slate-950 text-slate-100 antialiased overflow-x-hidden;
+  font-family: 'Inter', sans-serif;
+}
+
+/* Custom Premium Styles */
+.glass-panel {
+  @apply bg-slate-900/50 backdrop-blur-md border border-slate-800 rounded-2xl shadow-2xl;
+}
+
+.glow-indigo {
+  box-shadow: 0 0 20px rgba(99, 102, 241, 0.2);
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-slate-950;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-slate-800 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-indigo-600;
+}
+
+/* Recharts Customizations */
+.recharts-cartesian-grid-horizontal line,
+.recharts-cartesian-grid-vertical line {
+  @apply stroke-slate-800;
+}
+
+.recharts-tooltip-cursor {
+  @apply stroke-slate-700;
+}

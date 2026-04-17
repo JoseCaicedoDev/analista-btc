@@ -41,49 +41,49 @@ const App: React.FC = () => {
   const lastRSIW = historyWeekly[historyWeekly.length - 1]?.rsi;
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans p-4 md:p-6 lg:p-8">
-      {/* Header */}
-      <header className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4 glass-panel p-5 glow-indigo">
-        <div className="flex items-center gap-4">
-          <div className="bg-indigo-600 p-2.5 rounded-xl shadow-lg shadow-indigo-500/20">
-            <Layers size={24} className="text-white" />
+    <div className="h-screen bg-slate-950 text-slate-100 font-sans p-4 flex flex-col overflow-hidden">
+      {/* Header - Fixed Height */}
+      <header className="flex flex-col md:flex-row justify-between items-center mb-4 gap-4 glass-panel p-4 glow-indigo shrink-0">
+        <div className="flex items-center gap-3">
+          <div className="bg-indigo-600 p-2 rounded-xl shadow-lg shadow-indigo-500/20">
+            <Layers size={20} className="text-white" />
           </div>
           <div>
-            <h1 className="text-xl font-black tracking-tight leading-none mb-1">
+            <h1 className="text-lg font-black tracking-tight leading-none mb-1 text-white">
               CryptoAnalyzer <span className="text-indigo-400">ULTRA</span>
             </h1>
             <div className="flex items-center gap-2">
-              <span className="text-[10px] bg-slate-800 px-2 py-0.5 rounded text-slate-400 font-mono tracking-wider uppercase">Multi-Timeframe Engine</span>
-              <div className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />
+              <span className="text-[9px] bg-slate-800 px-2 py-0.5 rounded text-slate-400 font-mono tracking-wider uppercase">Multi-Timeframe Engine</span>
+              <div className="h-1 w-1 rounded-full bg-green-500 animate-pulse" />
             </div>
           </div>
         </div>
         <AssetSelector />
       </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      {/* Main Content Area - Expandable */}
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-4 min-h-0">
         
-        {/* Sidebar */}
-        <div className="lg:col-span-3 space-y-6">
-          <PriceCard />
+        {/* Sidebar - Fixed/Scrollable Column */}
+        <div className="lg:col-span-3 flex flex-col gap-4 min-h-0">
+          <div className="shrink-0"><PriceCard /></div>
 
-          <div className="glass-panel p-6">
-            <h3 className="text-xs font-bold text-slate-400 uppercase mb-6 flex items-center gap-2 tracking-widest">
-              <Zap size={14} className="text-yellow-500" /> Resumen Triple Fuerza
+          <div className="glass-panel p-5 shrink-0">
+            <h3 className="text-[10px] font-bold text-slate-400 uppercase mb-4 flex items-center gap-2 tracking-[0.2em]">
+              <Zap size={12} className="text-yellow-500" /> Resumen Fuerza
             </h3>
             
-            <div className="space-y-6">
-              <div className="space-y-3">
-                <p className="text-[10px] text-slate-500 uppercase font-black tracking-tighter">Monitor de RSI</p>
-                <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 gap-4">
+              <div className="space-y-2">
+                <div className="grid grid-cols-3 gap-2">
                   {[
                     { label: '4H', val: lastRSI4h },
                     { label: 'D', val: lastRSID },
                     { label: 'W', val: lastRSIW }
                   ].map((item, idx) => (
-                    <div key={idx} className="text-center p-3 bg-slate-950/50 rounded-xl border border-slate-800/50">
-                      <p className="text-[9px] text-slate-500 mb-1 font-bold">{item.label}</p>
-                      <p className={`text-sm font-black ${getRSIColor(item.val)}`}>
+                    <div key={idx} className="text-center p-2 bg-slate-950/50 rounded-lg border border-slate-800/50">
+                      <p className="text-[8px] text-slate-500 mb-0.5 font-bold uppercase">{item.label}</p>
+                      <p className={`text-xs font-black ${getRSIColor(item.val)}`}>
                         {item.val ? item.val.toFixed(1) : '--'}
                       </p>
                     </div>
@@ -91,82 +91,88 @@ const App: React.FC = () => {
                 </div>
               </div>
 
-              <div className="space-y-3">
-                <p className="text-[10px] text-slate-500 uppercase font-black tracking-tighter">Estado MACD</p>
-                <div className="space-y-2">
-                  {[
-                    { label: '4 Horas', data: history4h },
-                    { label: 'Diario', data: historyDaily },
-                    { label: 'Semanal', data: historyWeekly }
-                  ].map((item, idx) => {
-                    const lastHist = item.data[item.data.length - 1]?.hist ?? 0;
-                    return (
-                      <div key={idx} className="flex justify-between items-center bg-slate-950/50 px-4 py-2.5 rounded-xl border border-slate-800/50">
-                        <span className="text-[11px] font-medium text-slate-400">{item.label}</span>
-                        <span className={`text-[10px] font-black tracking-widest ${lastHist >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                          {lastHist >= 0 ? 'ALCISTA' : 'BAJISTA'}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
+              <div className="space-y-1.5">
+                {[
+                  { label: '4 Horas', data: history4h },
+                  { label: 'Diario', data: historyDaily },
+                  { label: 'Semanal', data: historyWeekly }
+                ].map((item, idx) => {
+                  const lastHist = item.data[item.data.length - 1]?.hist ?? 0;
+                  return (
+                    <div key={idx} className="flex justify-between items-center bg-slate-950/30 px-3 py-1.5 rounded-lg border border-slate-800/50">
+                      <span className="text-[10px] font-medium text-slate-400">{item.label}</span>
+                      <span className={`text-[9px] font-black tracking-widest ${lastHist >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                        {lastHist >= 0 ? 'ALCISTA' : 'BAJISTA'}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>
 
-          <AlertPanel />
+          <div className="flex-1 min-h-0 overflow-hidden">
+            <AlertPanel />
+          </div>
         </div>
 
-        {/* Charts Section */}
-        <div className="lg:col-span-9 space-y-6">
+        {/* Charts Section - Flexible Heights */}
+        <div className="lg:col-span-9 flex flex-col gap-4 min-h-0">
           
-          {/* Main Chart 4H */}
-          <div className="glass-panel p-6 h-[400px]">
-            <div className="flex justify-between items-center mb-6 px-2">
-              <h3 className="text-sm font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
-                <BarChart3 size={16} /> Movimiento 4 Horas
+          {/* Main Chart 4H - Show last 150 points for TradingView-like zoom */}
+          <div className="glass-panel p-5 h-[42%] shrink-0 flex flex-col">
+            <div className="flex justify-between items-center mb-2">
+              <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.25em] flex items-center gap-2">
+                <BarChart3 size={12} className="text-indigo-500" /> Movimiento Principal 4H
               </h3>
             </div>
-            <ResponsiveContainer width="100%" height="85%">
-              <AreaChart data={history4h}>
-                <defs>
-                  <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={selectedAsset.color} stopOpacity={0.4}/>
-                    <stop offset="95%" stopColor={selectedAsset.color} stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} opacity={0.3} />
-                <XAxis dataKey="time" hide />
-                <YAxis domain={['auto', 'auto']} orientation="right" stroke="#475569" fontSize={10} tickLine={false} axisLine={false} />
-                <Tooltip 
-                  contentStyle={{ backgroundColor: '#111218', border: '1px solid #1e293b', borderRadius: '12px', fontSize: '11px', fontWeight: 'bold' }} 
-                  labelFormatter={(t) => new Date(t).toLocaleString()}
-                />
-                <Area type="monotone" dataKey="price" stroke={selectedAsset.color} fill="url(#colorPrice)" strokeWidth={3} isAnimationActive={false} />
-              </AreaChart>
-            </ResponsiveContainer>
+            <div className="flex-1 w-full min-h-0">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={history4h.slice(-150)}>
+                  <defs>
+                    <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor={selectedAsset.color} stopOpacity={0.4}/>
+                      <stop offset="95%" stopColor={selectedAsset.color} stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} opacity={0.2} />
+                  <XAxis dataKey="time" hide />
+                  <YAxis domain={['auto', 'auto']} orientation="right" stroke="#475569" fontSize={8} tickLine={false} axisLine={false} />
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: '#111218', border: '1px solid #1e293b', borderRadius: '12px', fontSize: '9px', fontWeight: 'bold' }} 
+                    labelFormatter={(t) => new Date(t).toLocaleString()}
+                  />
+                  <Area type="monotone" dataKey="price" stroke={selectedAsset.color} fill="url(#colorPrice)" strokeWidth={2} isAnimationActive={false} />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
           </div>
 
-          {/* Triple RSI Charts */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <RSIChart data={history4h} title="RSI 4 Horas" color="#6366f1" />
-            <RSIChart data={historyDaily} title="RSI Diario" color="#3b82f6" />
-            <RSIChart data={historyWeekly} title="RSI Semanal" color="#818cf8" />
-          </div>
-
-          {/* Triple MACD Charts */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <MACDChart data={history4h} title="MACD 4H (Hist)" positiveColor="#6366f1" />
-            <MACDChart data={historyDaily} title="MACD Diario (Hist)" positiveColor="#3b82f6" />
-            <MACDChart data={historyWeekly} title="MACD Semanal (Hist)" positiveColor="#10b981" />
+          {/* Indicators Row - Expanded to prevent overlap */}
+          <div className="flex-1 min-h-0 grid grid-cols-3 gap-4">
+            {[
+              { label: '4 HORAS', rsi: history4h.slice(-100), macd: history4h.slice(-100) },
+              { label: 'DIARIO', rsi: historyDaily.slice(-100), macd: historyDaily.slice(-100) },
+              { label: 'SEMANAL', rsi: historyWeekly.slice(-100), macd: historyWeekly.slice(-100) },
+            ].map((timeframe, idx) => (
+              <div key={idx} className="flex flex-col gap-3 min-h-0">
+                <div className="flex-1 min-h-0">
+                  <RSIChart data={timeframe.rsi} title={`RSI ${timeframe.label}`} />
+                </div>
+                <div className="flex-1 min-h-0">
+                  <MACDChart data={timeframe.macd} title={`MACD ${timeframe.label}`} positiveColor="#6366f1" />
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>
 
-      <footer className="mt-6 text-center text-slate-700 text-[9px] font-mono tracking-[0.4em] uppercase">
-        PWA CLEAN ARCHITECTURE • yfinance LIVE DATA • ASYNC MICROSERVICES
+      <footer className="shrink-0 mt-3 text-center text-slate-700 text-[8px] font-mono tracking-[0.4em] uppercase">
+        NO-SCROLL DASHBOARD • REAL-TIME FEED • PWA ULTRA
       </footer>
     </div>
+
   );
 };
 

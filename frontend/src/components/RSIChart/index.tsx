@@ -10,7 +10,7 @@ interface RSIChartProps {
 
 export const RSIChart: React.FC<RSIChartProps> = ({ data, title }) => {
   return (
-    <div className="glass-panel p-5 h-[200px]">
+    <div className="glass-panel p-4 h-full flex flex-col min-h-0">
       <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">{title}</h4>
       <ResponsiveContainer width="100%" height="80%">
         <LineChart data={data}>

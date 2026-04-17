@@ -24,22 +24,52 @@ export const calculateSMA = (data: (number | undefined | null)[], period: number
   return result;
 };
 
-export const calculateEMA = (data: number[], period: number): number[] => {
+export const calculateEMA = (data: number[], period: number): (number | null)[] => {
   if (!data || data.length === 0) return [];
   const k = 2 / (period + 1);
-  const ema = [data[0]];
-  for (let i = 1; i < data.length; i++) {
-    ema.push(data[i] * k + ema[i - 1] * (1 - k));
+  const ema: (number | null)[] = [];
+  
+  let sum = 0;
+  for (let i = 0; i < data.length; i++) {
+    if (i < period - 1) {
+      sum += data[i];
+      ema.push(null);
+    } else if (i === period - 1) {
+      sum += data[i];
+      ema.push(sum / period);
+    } else {
+      const prevEma = ema[i - 1];
+      if (prevEma === null) {
+        ema.push(null);
+      } else {
+        ema.push(data[i] * k + prevEma * (1 - k));
+      }
+    }
   }
   return ema;
 };
 
-export const calculateRMA = (data: number[], period: number): number[] => {
+export const calculateRMA = (data: number[], period: number): (number | null)[] => {
   if (!data || data.length === 0) return [];
   const alpha = 1 / period;
-  const rma = [data[0]];
-  for (let i = 1; i < data.length; i++) {
-    rma.push(alpha * data[i] + (1 - alpha) * rma[i - 1]);
+  const rma: (number | null)[] = [];
+  
+  let sum = 0;
+  for (let i = 0; i < data.length; i++) {
+    if (i < period - 1) {
+      sum += data[i];
+      rma.push(null);
+    } else if (i === period - 1) {
+      sum += data[i];
+      rma.push(sum / period);
+    } else {
+      const prevRma = rma[i - 1];
+      if (prevRma === null) {
+        rma.push(null);
+      } else {
+        rma.push(alpha * data[i] + (1 - alpha) * prevRma);
+      }
+    }
   }
   return rma;
 };
@@ -63,7 +93,9 @@ export const calculateRSI = (prices: number[], period: number = 14): (number | n
     const up = rmaUp[i];
     const down = rmaDown[i];
     
-    if (down === 0) {
+    if (up === null || down === null) {
+      rsiValues.push(null);
+    } else if (down === 0) {
       rsiValues.push(100);
     } else if (up === 0) {
       rsiValues.push(0);
@@ -82,14 +114,31 @@ export const calculateMACD = (data: number[]) => {
   
   const ema12 = calculateEMA(data, 12);
   const ema26 = calculateEMA(data, 26);
-  const macdLine = ema12.map((val, i) => val - ema26[i]);
-  const signalLine = calculateEMA(macdLine, 9);
-  const histogram = macdLine.map((val, i) => val - (signalLine[i] || 0));
+  const macdLine = ema12.map((val, i) => {
+    const v12 = val;
+    const v26 = ema26[i];
+    return (v12 !== null && v26 !== null) ? v12 - v26 : null;
+  });
+
+  // Filter out nulls for signal EMA calculation to avoid internal lag issues, 
+  // but keep alignment by passing the whole array and handling nulls inside EMA
+  const macdLineNumbers = macdLine.map(v => v ?? 0); 
+  const signalLine = calculateEMA(macdLineNumbers, 9);
   
-  // Pine Script v6 Color Logic
+  // Re-apply nulls to signal line where MACD was null
+  const alignedSignal = signalLine.map((v, i) => macdLine[i] === null ? null : v);
+
+  const histogram = macdLine.map((val, i) => {
+    const sig = alignedSignal[i];
+    return (val !== null && sig !== null) ? val - sig : null;
+  });
+  
   const colors = histogram.map((h, i) => {
+    if (h === null) return "transparent";
     if (i === 0) return "#26a69a";
     const prevH = histogram[i-1];
+    if (prevH === null) return "#26a69a";
+    
     if (h >= 0) {
       return h > prevH ? "#26a69a" : "#b2dfdb";
     } else {
@@ -97,7 +146,7 @@ export const calculateMACD = (data: number[]) => {
     }
   });
 
-  return { macdLine, signalLine, histogram, colors };
+  return { macdLine, signalLine: alignedSignal, histogram, colors };
 };
 
 export const processIndicators = (history: DataPoint[]): DataPoint[] => {
@@ -105,18 +154,19 @@ export const processIndicators = (history: DataPoint[]): DataPoint[] => {
   if (prices.length < 2) return history;
   
   const rsi = calculateRSI(prices);
-  const rsiMA = calculateSMA(rsi, 14); // Smoothing MA from RSI.txt
+  const rsiMA = calculateSMA(rsi, 14);
   const { macdLine, signalLine, histogram, colors } = calculateMACD(prices);
   
   return history.map((d, i) => ({
     ...d,
     rsi: rsi[i] ?? undefined,
     rsiMA: rsiMA[i] ?? undefined,
-    macd: macdLine[i],
-    signal: signalLine[i],
-    hist: histogram[i],
+    macd: macdLine[i] ?? undefined,
+    signal: signalLine[i] ?? undefined,
+    hist: histogram[i] ?? undefined,
     histColor: colors[i]
   }));
 };
+
 
 

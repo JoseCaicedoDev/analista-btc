@@ -51,9 +51,9 @@ export const useMarketStore = create<MarketState>((set, get) => ({
   fetchHistory: async (ticker: string) => {
     try {
       const [h4, daily, weekly] = await Promise.all([
-        marketService.fetchHistory(ticker, '5d', '1h'),
-        marketService.fetchHistory(ticker, '1mo', '1d'),
-        marketService.fetchHistory(ticker, '1y', '1wk')
+        marketService.fetchHistory(ticker, '2y', '4h'),
+        marketService.fetchHistory(ticker, 'max', '1d'),
+        marketService.fetchHistory(ticker, 'max', '1wk')
       ]);
 
       set({ 

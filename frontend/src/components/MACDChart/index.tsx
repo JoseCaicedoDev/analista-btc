@@ -1,5 +1,5 @@
 import React from 'react';
-import { BarChart, Bar, ResponsiveContainer, Cell } from 'recharts';
+import { BarChart, Bar, Line, ResponsiveContainer, Cell, XAxis, YAxis, Tooltip } from 'recharts';
 import type { DataPoint } from '../../domain/indicators';
 
 interface MACDChartProps {
@@ -20,6 +20,12 @@ export const MACDChart: React.FC<MACDChartProps> = ({
       <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">{title}</h4>
       <ResponsiveContainer width="100%" height="80%">
         <BarChart data={data}>
+          <XAxis dataKey="time" hide />
+          <YAxis domain={['auto', 'auto']} hide />
+          <Tooltip 
+            contentStyle={{ backgroundColor: '#111218', border: 'none', borderRadius: '8px', fontSize: '10px' }} 
+            labelFormatter={(t) => new Date(t).toLocaleString()}
+          />
           <Bar dataKey="hist" isAnimationActive={false}>
             {data.map((entry, index) => (
               <Cell 
@@ -28,6 +34,9 @@ export const MACDChart: React.FC<MACDChartProps> = ({
               />
             ))}
           </Bar>
+          {/* MACD and Signal Lines from MACD.txt */}
+          <Line type="monotone" dataKey="macd" stroke="#2196F3" strokeWidth={1} dot={false} isAnimationActive={false} />
+          <Line type="monotone" dataKey="signal" stroke="#ff6d00" strokeWidth={1} dot={false} isAnimationActive={false} />
         </BarChart>
       </ResponsiveContainer>
     </div>

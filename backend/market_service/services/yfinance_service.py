@@ -20,13 +20,16 @@ class YFinanceService:
             # Use 'price' key to match the prototype logic
             result = []
             for _, row in df.iterrows():
-                # Handle potential MultiIndex columns from yfinance
-                price = float(row['Close'].iloc[0]) if isinstance(row['Close'], pd.Series) else float(row['Close'])
-                timestamp = row.iloc[0].timestamp() * 1000 # MS for JS Date
+                # Extract OHLC values safely
+                get_val = lambda col: float(row[col].iloc[0]) if isinstance(row[col], pd.Series) else float(row[col])
                 
                 result.append({
-                    "time": timestamp,
-                    "price": price
+                    "time": row.iloc[0].timestamp() * 1000,
+                    "open": get_val('Open'),
+                    "high": get_val('High'),
+                    "low": get_val('Low'),
+                    "close": get_val('Close'),
+                    "price": get_val('Close') # Keep 'price' for backward compatibility
                 })
             return result
         except Exception as e:

@@ -1,6 +1,10 @@
 export interface DataPoint {
   time: number;
   price: number;
+  open?: number;
+  high?: number;
+  low?: number;
+  close?: number;
   rsi?: number;
   rsiMA?: number;
   hist?: number;

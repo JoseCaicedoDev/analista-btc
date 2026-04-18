@@ -3,6 +3,7 @@ import { type DataPoint, processIndicators } from '../domain/indicators';
 import { marketService } from '../services/marketService';
 
 interface MarketState {
+  availableAssets: any[];
   selectedAsset: { id: string; symbol: string; name: string; color: string };
   currentPrice: number;
   history4h: DataPoint[];
@@ -10,6 +11,7 @@ interface MarketState {
   historyWeekly: DataPoint[];
   alerts: any[];
   
+  fetchAssets: () => Promise<void>;
   setSelectedAsset: (asset: any) => void;
   setCurrentPrice: (price: number) => void;
   fetchHistory: (ticker: string) => Promise<void>;
@@ -17,12 +19,28 @@ interface MarketState {
 }
 
 export const useMarketStore = create<MarketState>((set, get) => ({
+  availableAssets: [],
   selectedAsset: { id: 'BTC-USD', symbol: 'BTC', name: 'Bitcoin', color: '#F7931A' },
   currentPrice: 0,
   history4h: [],
   historyDaily: [],
   historyWeekly: [],
   alerts: [],
+  
+  fetchAssets: async () => {
+    try {
+      const assets = await marketService.fetchAssets();
+      if (assets && assets.length > 0) {
+        set({ availableAssets: assets });
+        // Optionally set the first asset as default if not already set or if it's the beginning
+        if (get().history4h.length === 0) {
+          get().setSelectedAsset(assets[0]);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching assets:", error);
+    }
+  },
 
   setSelectedAsset: (asset) => {
     set({ selectedAsset: asset, history4h: [], historyDaily: [], historyWeekly: [] });
@@ -35,7 +53,14 @@ export const useMarketStore = create<MarketState>((set, get) => ({
     // Función para actualizar el último precio en el historial y recalcular indicadores en tiempo real
     const updateRealtime = (history: DataPoint[]) => {
       if (history.length === 0) return history;
-      const lastPoint = { ...history[history.length - 1], price };
+      const last = history[history.length - 1];
+      const lastPoint: DataPoint = { 
+        ...last, 
+        price,
+        close: price,
+        high: Math.max(last.high ?? price, price),
+        low: Math.min(last.low ?? price, price)
+      };
       const newHistory = [...history.slice(0, -1), lastPoint];
       return processIndicators(newHistory);
     };

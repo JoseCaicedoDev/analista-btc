@@ -5,13 +5,14 @@ import {
   BarChart3
 } from 'lucide-react';
 import { 
-  AreaChart, 
-  Area, 
   XAxis, 
   YAxis, 
   CartesianGrid, 
   Tooltip, 
-  ResponsiveContainer 
+  ResponsiveContainer,
+  ComposedChart,
+  Bar,
+  Cell
 } from 'recharts';
 
 import { useMarketStore } from './store/useMarketStore';
@@ -23,11 +24,24 @@ import { RSIChart } from './components/RSIChart';
 import { MACDChart } from './components/MACDChart';
 
 const App: React.FC = () => {
-  const { selectedAsset, history4h, historyDaily, historyWeekly } = useMarketStore();
+  const { history4h, historyDaily, historyWeekly, currentPrice } = useMarketStore();
+  const [countdown, setCountdown] = React.useState(5);
   
   // Use custom hooks for side effects
   useMarketData();
   useAlerts();
+
+  // Countdown logic - resets when currentPrice changes
+  React.useEffect(() => {
+    setCountdown(5);
+  }, [currentPrice]);
+
+  React.useEffect(() => {
+    const timer = setInterval(() => {
+      setCountdown((prev) => (prev > 0 ? prev - 1 : 5));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   const getRSIColor = (val?: number) => {
     if (!val) return 'text-blue-400';
@@ -54,11 +68,18 @@ const App: React.FC = () => {
             </h1>
             <div className="flex items-center gap-2">
               <span className="text-[9px] bg-slate-800 px-2 py-0.5 rounded text-slate-400 font-mono tracking-wider uppercase">Multi-Timeframe Engine</span>
-              <div className="h-1 w-1 rounded-full bg-green-500 animate-pulse" />
+              <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
             </div>
           </div>
         </div>
-        <AssetSelector />
+
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-2 bg-slate-900/50 px-3 py-1.5 rounded-lg border border-slate-800">
+            <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Next Refresh</span>
+            <span className="text-sm font-black font-mono text-indigo-400 w-[12px]">{countdown}s</span>
+          </div>
+          <AssetSelector />
+        </div>
       </header>
 
       {/* Main Content Area - Expandable */}
@@ -119,34 +140,55 @@ const App: React.FC = () => {
         {/* Charts Section - Flexible Heights */}
         <div className="lg:col-span-9 flex flex-col gap-4 min-h-0">
           
-          {/* Main Chart 4H - Show last 150 points for TradingView-like zoom */}
+          {/* Main Chart 4H - Real Candlestick Chart */}
           <div className="glass-panel p-5 h-[42%] shrink-0 flex flex-col">
             <div className="flex justify-between items-center mb-2">
               <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.25em] flex items-center gap-2">
-                <BarChart3 size={12} className="text-indigo-500" /> Movimiento Principal 4H
+                <BarChart3 size={12} className="text-indigo-500" /> Movimiento Principal 4H (VELAS)
               </h3>
+              <div className="flex items-center gap-4 text-[9px] font-bold">
+                <div className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-green-500" /> ALCISTA</div>
+                <div className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-red-500" /> BAJISTA</div>
+              </div>
             </div>
             <div className="flex-1 w-full min-h-0">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={history4h.slice(-150)}>
-                  <defs>
-                    <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor={selectedAsset.color} stopOpacity={0.4}/>
-                      <stop offset="95%" stopColor={selectedAsset.color} stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
+                <ComposedChart data={history4h.slice(-100)}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} opacity={0.2} />
                   <XAxis dataKey="time" hide />
-                  <YAxis domain={['auto', 'auto']} orientation="right" stroke="#475569" fontSize={8} tickLine={false} axisLine={false} />
+                  <YAxis 
+                    domain={['auto', 'auto']} 
+                    orientation="right" 
+                    stroke="#475569" 
+                    fontSize={8} 
+                    tickLine={false} 
+                    axisLine={false} 
+                    tickFormatter={(val) => val.toLocaleString()}
+                  />
                   <Tooltip 
-                    contentStyle={{ backgroundColor: '#111218', border: '1px solid #1e293b', borderRadius: '12px', fontSize: '9px', fontWeight: 'bold' }} 
+                    contentStyle={{ backgroundColor: '#111218', border: '1px solid #1e293b', borderRadius: '12px', fontSize: '10px' }} 
                     labelFormatter={(t) => new Date(t).toLocaleString()}
                   />
-                  <Area type="monotone" dataKey="price" stroke={selectedAsset.color} fill="url(#colorPrice)" strokeWidth={2} isAnimationActive={false} />
-                </AreaChart>
+                  
+                  {/* Candle Wick (Low to High) */}
+                  <Bar dataKey={(d) => [d.low ?? d.price, d.high ?? d.price]} barSize={1} isAnimationActive={false}>
+                    {history4h.slice(-100).map((entry, index) => (
+                      <Cell key={`wick-${index}`} fill={(entry.close ?? 0) >= (entry.open ?? 0) ? '#22c55e' : '#ef4444'} />
+                    ))}
+                  </Bar>
+                  
+                  {/* Candle Body (Open to Close) */}
+                  <Bar dataKey={(d) => [d.open ?? d.price, d.close ?? d.price]} barSize={8} isAnimationActive={false}>
+                    {history4h.slice(-100).map((entry, index) => (
+                      <Cell key={`body-${index}`} fill={(entry.close ?? 0) >= (entry.open ?? 0) ? '#22c55e' : '#ef4444'} />
+                    ))}
+                  </Bar>
+                </ComposedChart>
               </ResponsiveContainer>
             </div>
           </div>
+
+
 
           {/* Indicators Row - Expanded to prevent overlap */}
           <div className="flex-1 min-h-0 grid grid-cols-3 gap-4">

@@ -1,6 +1,8 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 import asyncio
+import json
+import os
 from services.yfinance_service import YFinanceService
 import uvicorn
 
@@ -14,6 +16,18 @@ app.add_middleware(
 )
 
 service = YFinanceService()
+
+@app.get("/api/market/assets")
+async def get_assets():
+    try:
+        config_path = "/app/config/token.json"
+        if os.path.exists(config_path):
+            with open(config_path, "r") as f:
+                return json.load(f)
+        return []
+    except Exception as e:
+        print(f"Error reading token configuration: {e}")
+        return []
 
 @app.get("/api/market/{ticker}/history")
 async def get_history(ticker: str, period: str = "1mo", interval: str = "1h"):

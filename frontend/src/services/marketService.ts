@@ -11,6 +11,11 @@ export const marketService = {
     });
     return response.data;
   },
+  
+  fetchAssets: async () => {
+    const response = await axios.get(`${MARKET_API}/market/assets`);
+    return response.data;
+  },
 
   subscribeToPrice: (ticker: string, onMessage: (price: number) => void) => {
     const socket = new WebSocket(`${WS_PRICE_URL}/${ticker}`);

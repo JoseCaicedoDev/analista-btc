@@ -5,6 +5,7 @@ services:
       - "4701:8001"
     volumes:
       - ./backend/market_service:/app
+      - ./nginx/indicadores:/app/config
     command: uvicorn main:app --host 0.0.0.0 --port 8001 --reload
 
   alerts_service:

@@ -3,7 +3,11 @@ import { useMarketStore } from '../store/useMarketStore';
 import { marketService } from '../services/marketService';
 
 export const useMarketData = () => {
-  const { selectedAsset, setCurrentPrice, fetchHistory } = useMarketStore();
+  const { selectedAsset, setCurrentPrice, fetchHistory, fetchAssets } = useMarketStore();
+
+  useEffect(() => {
+    fetchAssets();
+  }, [fetchAssets]);
 
   useEffect(() => {
     fetchHistory(selectedAsset.id);

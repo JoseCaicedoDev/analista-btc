@@ -1,38 +1,38 @@
-import axios from 'axios';
+const BINANCE_REST = 'https://api.binance.com/api/v3';
+const BINANCE_WS = 'wss://stream.binance.com:9443/ws';
 
-const MARKET_API = '/api';
-const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-const WS_PRICE_URL = `${wsProtocol}//${window.location.host}/ws/price`;
-const WS_ALERTS_URL = `${wsProtocol}//${window.location.host}/ws/alerts`;
+// Map yfinance-style intervals to Binance intervals
+const intervalMap: Record<string, string> = {
+  '1h': '1h',
+  '4h': '4h',
+  '1d': '1d',
+  '1wk': '1w',
+};
 
 export const marketService = {
-  fetchHistory: async (ticker: string, period: string, interval: string) => {
-    const response = await axios.get(`${MARKET_API}/market/${ticker}/history`, {
-      params: { period, interval }
-    });
-    return response.data;
-  },
-  
-  fetchAssets: async () => {
-    const response = await axios.get(`${MARKET_API}/market/assets`);
-    return response.data;
+  fetchHistory: async (ticker: string, _period: string, interval: string) => {
+    const binanceInterval = intervalMap[interval] ?? interval;
+    const url = `${BINANCE_REST}/klines?symbol=${ticker}&interval=${binanceInterval}&limit=1000`;
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`Binance klines error: ${response.status}`);
+    const raw: string[][] = await response.json();
+    return raw.map((k) => ({
+      time: Math.floor(Number(k[0]) / 1000),
+      open: parseFloat(k[1]),
+      high: parseFloat(k[2]),
+      low: parseFloat(k[3]),
+      close: parseFloat(k[4]),
+      price: parseFloat(k[4]),
+    }));
   },
 
   subscribeToPrice: (ticker: string, onMessage: (price: number) => void) => {
-    const socket = new WebSocket(`${WS_PRICE_URL}/${ticker}`);
+    const stream = ticker.toLowerCase() + '@trade';
+    const socket = new WebSocket(`${BINANCE_WS}/${stream}`);
     socket.onmessage = (event) => {
       const data = JSON.parse(event.data);
-      onMessage(data.price);
+      onMessage(parseFloat(data.p));
     };
     return socket;
   },
-
-  subscribeToAlerts: (onAlerts: (alerts: any[]) => void) => {
-    const socket = new WebSocket(WS_ALERTS_URL);
-    socket.onmessage = (event) => {
-      const alerts = JSON.parse(event.data);
-      onAlerts(alerts);
-    };
-    return socket;
-  }
 };

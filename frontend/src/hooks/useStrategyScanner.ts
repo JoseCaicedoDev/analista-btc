@@ -12,7 +12,7 @@ let _alarmAudio: HTMLAudioElement | null = null;
 
 const playAlarm = () => {
   if (!_alarmAudio) {
-    _alarmAudio = new Audio('/alarma.mp3');
+    _alarmAudio = new Audio(import.meta.env.BASE_URL + 'alarma.mp3');
     _alarmAudio.loop = true;
   }
   _alarmAudio.play().catch(e => console.error("Audio play failed", e));

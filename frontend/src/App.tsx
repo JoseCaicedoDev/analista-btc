@@ -41,7 +41,7 @@ const App: React.FC = () => {
           </div>
           <div>
             <h1 className="text-lg font-black tracking-tight leading-none mb-1 text-white">
-              CryptoAnalyzer <span className="text-indigo-400">ULTRA</span>
+              Vigía <span className="text-indigo-400">Estratégico</span>
             </h1>
             <div className="flex items-center gap-2">
               <span className="text-[9px] bg-slate-800 px-2 py-0.5 rounded text-slate-400 font-mono tracking-wider uppercase">Multi-Timeframe Engine</span>
@@ -101,7 +101,7 @@ const App: React.FC = () => {
       </div>
 
       <footer className="shrink-0 mt-3 text-center text-slate-700 text-[8px] font-mono tracking-[0.4em] uppercase">
-        NO-SCROLL DASHBOARD • REAL-TIME FEED • PWA ULTRA
+        VIGÍA ESTRATÉGICO • REAL-TIME FEED • PWA
       </footer>
     </div>
 

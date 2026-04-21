@@ -39,6 +39,7 @@ export const StochRSIChart: React.FC<StochRSIChartProps> = ({ data: propData, ti
             <Tooltip
               contentStyle={{ backgroundColor: '#111218', border: '1px solid #1e293b', borderRadius: '12px', fontSize: '10px' }}
               labelFormatter={(t) => new Date(Number(t) * 1000).toLocaleString()}
+              formatter={(v: number) => [v?.toFixed(2), undefined]}
               itemStyle={{ fontSize: '10px', fontWeight: 'bold' }}
               cursor={{ stroke: '#6366f1', strokeWidth: 1, strokeDasharray: '4 2' }}
             />

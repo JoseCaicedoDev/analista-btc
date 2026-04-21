@@ -27,6 +27,7 @@ export const MACDChart: React.FC<MACDChartProps> = ({
           <Tooltip
             contentStyle={{ backgroundColor: '#111218', border: 'none', borderRadius: '8px', fontSize: '10px' }}
             labelFormatter={(t) => new Date(t * 1000).toLocaleString()}
+            formatter={(v: number) => [v?.toFixed(2), undefined]}
             cursor={{ stroke: '#6366f1', strokeWidth: 1, strokeDasharray: '4 2' }}
           />
           <Bar dataKey="hist" isAnimationActive={false}>

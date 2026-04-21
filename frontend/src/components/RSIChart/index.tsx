@@ -21,6 +21,7 @@ export const RSIChart: React.FC<RSIChartProps> = ({ data, title, syncId }) => {
           <Tooltip
             contentStyle={{ backgroundColor: '#111218', border: 'none', borderRadius: '8px', fontSize: '10px' }}
             labelFormatter={(t) => new Date(t * 1000).toLocaleString()}
+            formatter={(v: number) => [v?.toFixed(2), undefined]}
             cursor={{ stroke: '#6366f1', strokeWidth: 1, strokeDasharray: '4 2' }}
           />
           <ReferenceLine y={70} stroke="#787B86" strokeDasharray="3 3" />

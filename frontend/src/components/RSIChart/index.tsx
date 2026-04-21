@@ -13,7 +13,7 @@ export const RSIChart: React.FC<RSIChartProps> = ({ data, title, syncId }) => {
   return (
     <div className="glass-panel p-4 h-full flex flex-col min-h-0">
       <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">{title}</h4>
-      <ResponsiveContainer width="100%" height="80%">
+      <ResponsiveContainer width="100%" height="80%" debounce={50}>
         <LineChart data={data} syncId={syncId}>
           <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
           <XAxis dataKey="time" hide />

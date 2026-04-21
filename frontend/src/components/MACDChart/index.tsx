@@ -20,7 +20,7 @@ export const MACDChart: React.FC<MACDChartProps> = ({
   return (
     <div className="glass-panel p-4 h-full flex flex-col min-h-0">
       <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">{title}</h4>
-      <ResponsiveContainer width="100%" height="80%">
+      <ResponsiveContainer width="100%" height="80%" debounce={50}>
         <ComposedChart data={data} syncId={syncId}>
           <XAxis dataKey="time" hide />
           <YAxis domain={['auto', 'auto']} hide />

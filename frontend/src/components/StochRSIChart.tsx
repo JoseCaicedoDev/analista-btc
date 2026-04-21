@@ -24,7 +24,7 @@ export const StochRSIChart: React.FC<StochRSIChartProps> = ({ data: propData, ti
         </div>
       )}
       <div className="flex-1 min-h-0">
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height="100%" debounce={50}>
           <ComposedChart data={data} syncId={syncId}>
             <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} opacity={0.3} />
             <XAxis dataKey="time" hide />
@@ -38,7 +38,7 @@ export const StochRSIChart: React.FC<StochRSIChartProps> = ({ data: propData, ti
             />
             <Tooltip
               contentStyle={{ backgroundColor: '#111218', border: '1px solid #1e293b', borderRadius: '12px', fontSize: '10px' }}
-              labelFormatter={(t) => new Date(t * 1000).toLocaleString()}
+              labelFormatter={(t: number) => new Date(t * 1000).toLocaleString()}
               itemStyle={{ fontSize: '10px', fontWeight: 'bold' }}
               cursor={{ stroke: '#6366f1', strokeWidth: 1, strokeDasharray: '4 2' }}
             />

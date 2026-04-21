@@ -6,6 +6,7 @@ interface MarketState {
   availableAssets: any[];
   selectedAsset: { id: string; symbol: string; name: string; color: string };
   currentPrice: number;
+  history1h: DataPoint[];
   history4h: DataPoint[];
   historyDaily: DataPoint[];
   historyWeekly: DataPoint[];
@@ -23,6 +24,7 @@ export const useMarketStore = create<MarketState>((set, get) => ({
   availableAssets: [],
   selectedAsset: { id: 'BTC-USD', symbol: 'BTC', name: 'Bitcoin', color: '#F7931A' },
   currentPrice: 0,
+  history1h: [],
   history4h: [],
   historyDaily: [],
   historyWeekly: [],
@@ -44,7 +46,7 @@ export const useMarketStore = create<MarketState>((set, get) => ({
   },
 
   setSelectedAsset: (asset) => {
-    set({ selectedAsset: asset, history4h: [], historyDaily: [], historyWeekly: [] });
+    set({ selectedAsset: asset, history1h: [], history4h: [], historyDaily: [], historyWeekly: [] });
     get().fetchHistory(asset.id);
   },
 
@@ -68,6 +70,7 @@ export const useMarketStore = create<MarketState>((set, get) => ({
 
     set({ 
       currentPrice: price,
+      history1h: updateRealtime(state.history1h),
       history4h: updateRealtime(state.history4h),
       historyDaily: updateRealtime(state.historyDaily),
       historyWeekly: updateRealtime(state.historyWeekly)
@@ -76,13 +79,15 @@ export const useMarketStore = create<MarketState>((set, get) => ({
 
   fetchHistory: async (ticker: string) => {
     try {
-      const [h4, daily, weekly] = await Promise.all([
+      const [h1, h4, daily, weekly] = await Promise.all([
+        marketService.fetchHistory(ticker, '60d', '1h'),
         marketService.fetchHistory(ticker, '2y', '4h'),
         marketService.fetchHistory(ticker, 'max', '1d'),
         marketService.fetchHistory(ticker, 'max', '1wk')
       ]);
 
       set({ 
+        history1h: processIndicators(h1),
         history4h: processIndicators(h4), 
         historyDaily: processIndicators(daily), 
         historyWeekly: processIndicators(weekly) 

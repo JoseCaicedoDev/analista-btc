@@ -16,13 +16,14 @@ import {
 } from 'recharts';
 
 import { useMarketStore } from './store/useMarketStore';
-import { useMarketData, useAlerts } from './hooks/useMarketData';
+import { useMarketData } from './hooks/useMarketData';
 import { useStrategyScanner } from './hooks/useStrategyScanner';
 import { AssetSelector } from './components/AssetSelector';
 import { PriceCard } from './components/PriceCard';
 import { AlertPanel } from './components/AlertPanel';
 import { RSIChart } from './components/RSIChart';
 import { MACDChart } from './components/MACDChart';
+import { StochRSIChart } from './components/StochRSIChart';
 
 
 const App: React.FC = () => {
@@ -31,7 +32,6 @@ const App: React.FC = () => {
 
   // Use custom hooks for side effects
   useMarketData();
-  useAlerts();
   useStrategyScanner();
 
   // Countdown logic - resets when currentPrice changes
@@ -90,62 +90,81 @@ const App: React.FC = () => {
         {/* Charts Section - Flexible Heights */}
         <div className="lg:col-span-9 flex flex-col gap-4 min-h-0">
 
-          {/* Main Chart 4H - Real Candlestick Chart */}
-          <div className="glass-panel p-5 h-[42%] shrink-0 flex flex-col">
-            <div className="flex justify-between items-center mb-2">
-              <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.25em] flex items-center gap-2">
-                <BarChart3 size={12} className="text-indigo-500" /> Movimiento Principal 4H (VELAS)
-              </h3>
-              <div className="flex items-center gap-4 text-[9px] font-bold">
-                <div className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-green-500" /> ALCISTA</div>
-                <div className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-red-500" /> BAJISTA</div>
-                <div className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-[#ef4444]" /> EMA 200</div>
+          {/* Main Top Section - Divided in 2 sections */}
+          <div className="h-[42%] shrink-0 flex gap-4 min-h-0">
+            {/* Sec 1: Main Chart 4H - Real Candlestick Chart */}
+            <div className="glass-panel p-5 flex-1 flex flex-col min-w-0">
+              <div className="flex justify-between items-center mb-2">
+                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.25em] flex items-center gap-2">
+                  <BarChart3 size={12} className="text-indigo-500" /> Movimiento Principal 4H
+                </h3>
+                <div className="flex items-center gap-4 text-[9px] font-bold">
+                  <div className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-green-500" /> ALCISTA</div>
+                  <div className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-red-500" /> BAJISTA</div>
+                  <div className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-[#ef4444]" /> EMA 200</div>
+                </div>
+              </div>
+              <div className="flex-1 w-full min-h-0">
+                <ResponsiveContainer width="100%" height="100%">
+                  <ComposedChart data={history4h.slice(-100)}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} opacity={0.2} />
+                    <XAxis dataKey="time" hide />
+                    <YAxis
+                      domain={['auto', 'auto']}
+                      orientation="right"
+                      stroke="#475569"
+                      fontSize={8}
+                      tickLine={false}
+                      axisLine={false}
+                      tickFormatter={(val) => val.toLocaleString()}
+                    />
+                    <Tooltip
+                      contentStyle={{ backgroundColor: '#111218', border: '1px solid #1e293b', borderRadius: '12px', fontSize: '10px' }}
+                      labelFormatter={(t) => new Date(t).toLocaleString()}
+                    />
+
+                    {/* Candle Wick (Low to High) */}
+                    <Bar dataKey={(d) => [d.low ?? d.price, d.high ?? d.price]} barSize={1} isAnimationActive={false}>
+                      {history4h.slice(-100).map((entry, index) => (
+                        <Cell key={`wick-${index}`} fill={(entry.close ?? 0) >= (entry.open ?? 0) ? '#22c55e' : '#ef4444'} />
+                      ))}
+                    </Bar>
+
+                     {/* Candle Body (Open to Close) */}
+                    <Bar dataKey={(d) => [d.open ?? d.price, d.close ?? d.price]} barSize={8} isAnimationActive={false}>
+                      {history4h.slice(-100).map((entry, index) => (
+                        <Cell key={`body-${index}`} fill={(entry.close ?? 0) >= (entry.open ?? 0) ? '#22c55e' : '#ef4444'} />
+                      ))}
+                    </Bar>
+                    
+                    {/* EMA 200 Line (Long term trend) */}
+                    <Line 
+                      type="monotone" 
+                      dataKey="ema200" 
+                      stroke="#ef4444" 
+                      strokeWidth={1.5} 
+                      dot={false} 
+                      isAnimationActive={false} 
+                    />
+                  </ComposedChart>
+                </ResponsiveContainer>
               </div>
             </div>
-            <div className="flex-1 w-full min-h-0">
-              <ResponsiveContainer width="100%" height="100%">
-                <ComposedChart data={history4h.slice(-100)}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} opacity={0.2} />
-                  <XAxis dataKey="time" hide />
-                  <YAxis
-                    domain={['auto', 'auto']}
-                    orientation="right"
-                    stroke="#475569"
-                    fontSize={8}
-                    tickLine={false}
-                    axisLine={false}
-                    tickFormatter={(val) => val.toLocaleString()}
-                  />
-                  <Tooltip
-                    contentStyle={{ backgroundColor: '#111218', border: '1px solid #1e293b', borderRadius: '12px', fontSize: '10px' }}
-                    labelFormatter={(t) => new Date(t).toLocaleString()}
-                  />
 
-                  {/* Candle Wick (Low to High) */}
-                  <Bar dataKey={(d) => [d.low ?? d.price, d.high ?? d.price]} barSize={1} isAnimationActive={false}>
-                    {history4h.slice(-100).map((entry, index) => (
-                      <Cell key={`wick-${index}`} fill={(entry.close ?? 0) >= (entry.open ?? 0) ? '#22c55e' : '#ef4444'} />
-                    ))}
-                  </Bar>
-
-                   {/* Candle Body (Open to Close) */}
-                  <Bar dataKey={(d) => [d.open ?? d.price, d.close ?? d.price]} barSize={8} isAnimationActive={false}>
-                    {history4h.slice(-100).map((entry, index) => (
-                      <Cell key={`body-${index}`} fill={(entry.close ?? 0) >= (entry.open ?? 0) ? '#22c55e' : '#ef4444'} />
-                    ))}
-                  </Bar>
-                  
-                  {/* EMA 200 Line (Long term trend) */}
-                  <Line 
-                    type="monotone" 
-                    dataKey="ema200" 
-                    stroke="#ef4444" 
-                    strokeWidth={1.5} 
-                    dot={false} 
-                    isAnimationActive={false} 
-                  />
-                </ComposedChart>
-              </ResponsiveContainer>
+            {/* Sec 2: Stoch RSI 1H */}
+            <div className="glass-panel p-5 flex-[0.7] flex flex-col min-w-0">
+              <div className="flex justify-between items-center mb-2">
+                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.25em] flex items-center gap-2">
+                  <BarChart3 size={12} className="text-indigo-500" /> Stoch RSI 1H
+                </h3>
+                <div className="flex items-center gap-4 text-[9px] font-bold">
+                  <div className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-[#2962FF]" /> K</div>
+                  <div className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-[#FF6D00]" /> D</div>
+                </div>
+              </div>
+              <div className="flex-1 w-full min-h-0">
+                <StochRSIChart />
+              </div>
             </div>
           </div>
 

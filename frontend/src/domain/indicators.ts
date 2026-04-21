@@ -12,6 +12,8 @@ export interface DataPoint {
   signal?: number;
   histColor?: string;
   ema200?: number;
+  stochK?: number;
+  stochD?: number;
 }
 
 export const calculateSMA = (data: (number | undefined | null)[], period: number): (number | null)[] => {
@@ -154,6 +156,22 @@ export const calculateMACD = (data: number[]) => {
   return { macdLine, signalLine: alignedSignal, histogram, colors };
 };
 
+export const calculateStochRSI = (rsi: (number | null)[], lengthStoch: number, smoothK: number, smoothD: number) => {
+  const stochRsiLine = rsi.map((val, i) => {
+    if (i < lengthStoch - 1) return null;
+    const window = rsi.slice(i - lengthStoch + 1, i + 1);
+    const validWindow = window.filter((v): v is number => v !== null);
+    if (validWindow.length < lengthStoch) return null;
+    const lowest = Math.min(...validWindow);
+    const highest = Math.max(...validWindow);
+    if (highest === lowest) return 0;
+    return 100 * (val! - lowest) / (highest - lowest);
+  });
+  const kLine = calculateSMA(stochRsiLine, smoothK);
+  const dLine = calculateSMA(kLine, smoothD);
+  return { kLine, dLine };
+};
+
 export const processIndicators = (history: DataPoint[]): DataPoint[] => {
   const prices = history.map(d => d.price);
   if (prices.length < 2) return history;
@@ -162,6 +180,7 @@ export const processIndicators = (history: DataPoint[]): DataPoint[] => {
   const rsiMA = calculateSMA(rsi, 14);
   const { macdLine, signalLine, histogram, colors } = calculateMACD(prices);
   const ema200 = calculateEMA(prices, 200);
+  const { kLine, dLine } = calculateStochRSI(rsi, 14, 3, 3);
   
   return history.map((d, i) => ({
     ...d,
@@ -171,7 +190,9 @@ export const processIndicators = (history: DataPoint[]): DataPoint[] => {
     signal: signalLine[i] ?? undefined,
     hist: histogram[i] ?? undefined,
     histColor: colors[i],
-    ema200: ema200[i] ?? undefined
+    ema200: ema200[i] ?? undefined,
+    stochK: kLine[i] ?? undefined,
+    stochD: dLine[i] ?? undefined
   }));
 };
 export const calculateRSIDivergence = (history: DataPoint[]) => {

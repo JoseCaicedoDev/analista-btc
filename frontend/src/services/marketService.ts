@@ -27,11 +27,12 @@ export const marketService = {
   },
 
   subscribeToPrice: (ticker: string, onMessage: (price: number) => void) => {
-    const stream = ticker.toLowerCase() + '@trade';
+    // @miniTicker fires once per second with the consolidated close price — smoother than @trade
+    const stream = ticker.toLowerCase() + '@miniTicker';
     const socket = new WebSocket(`${BINANCE_WS}/${stream}`);
     socket.onmessage = (event) => {
       const data = JSON.parse(event.data);
-      onMessage(parseFloat(data.p));
+      onMessage(parseFloat(data.c)); // 'c' = current close price
     };
     return socket;
   },

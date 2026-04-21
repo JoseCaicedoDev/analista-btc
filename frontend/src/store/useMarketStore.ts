@@ -16,6 +16,7 @@ interface MarketState {
 
   setSelectedAsset: (asset: (typeof ASSETS)[0]) => void;
   setCurrentPrice: (price: number) => void;
+  refreshIndicators: (price: number) => void;
   fetchHistory: (ticker: string) => Promise<void>;
   addAlerts: (newAlerts: any[]) => void;
   addAlert: (alert: any) => void;
@@ -38,28 +39,32 @@ export const useMarketStore = create<MarketState>((set, get) => ({
     get().fetchHistory(asset.id);
   },
 
-  setCurrentPrice: (price) => {
+  // Lightweight: only updates the price number shown in PriceCard
+  setCurrentPrice: (price) => set({ currentPrice: price }),
+
+  // Heavy: updates the last candle in all timeframes and recalculates all indicators.
+  // Call this on a throttled interval (e.g. every 5s), not on every trade event.
+  refreshIndicators: (price) => {
     const state = get();
 
-    const updateRealtime = (history: DataPoint[]) => {
+    const updateLast = (history: DataPoint[]) => {
       if (history.length === 0) return history;
       const last = history[history.length - 1];
-      const lastPoint: DataPoint = {
+      const updated: DataPoint = {
         ...last,
         price,
         close: price,
         high: Math.max(last.high ?? price, price),
         low: Math.min(last.low ?? price, price),
       };
-      return processIndicators([...history.slice(0, -1), lastPoint]);
+      return processIndicators([...history.slice(0, -1), updated]);
     };
 
     set({
-      currentPrice: price,
-      history1h: updateRealtime(state.history1h),
-      history4h: updateRealtime(state.history4h),
-      historyDaily: updateRealtime(state.historyDaily),
-      historyWeekly: updateRealtime(state.historyWeekly),
+      history1h: updateLast(state.history1h),
+      history4h: updateLast(state.history4h),
+      historyDaily: updateLast(state.historyDaily),
+      historyWeekly: updateLast(state.historyWeekly),
     });
   },
 

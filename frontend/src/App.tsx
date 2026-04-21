@@ -15,21 +15,17 @@ import { StochRSIChart } from './components/StochRSIChart';
 
 
 const App: React.FC = () => {
-  const { history4h, historyDaily, historyWeekly, currentPrice } = useMarketStore();
+  const { history4h, historyDaily, historyWeekly } = useMarketStore();
   const [countdown, setCountdown] = React.useState(5);
 
   // Use custom hooks for side effects
   useMarketData();
   useStrategyScanner();
 
-  // Countdown logic - resets when currentPrice changes
-  React.useEffect(() => {
-    setCountdown(5);
-  }, [currentPrice]);
-
+  // Countdown cycles 5→0 in sync with the 5s indicator refresh interval
   React.useEffect(() => {
     const timer = setInterval(() => {
-      setCountdown((prev) => (prev > 0 ? prev - 1 : 5));
+      setCountdown((prev) => (prev <= 1 ? 5 : prev - 1));
     }, 1000);
     return () => clearInterval(timer);
   }, []);

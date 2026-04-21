@@ -12,7 +12,7 @@ export default defineConfig({
       manifest: {
         name: 'CryptoAnalyzer Ultra',
         short_name: 'CryptoUltra',
-        description: 'PWA for crypto analysis with clean code and microservices',
+        description: 'Dashboard de análisis técnico en tiempo real para Bitcoin y Ethereum. RSI, MACD, Stochastic RSI multi-timeframe.',
         theme_color: '#0f172a',
         background_color: '#0f172a',
         display: 'standalone',

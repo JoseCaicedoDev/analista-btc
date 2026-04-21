@@ -75,8 +75,8 @@ const App: React.FC = () => {
           </div>
         </div>
 
-        {/* Charts Section - Flexible Heights */}
-        <div className="lg:col-span-9 flex flex-col gap-4 min-h-0">
+        {/* Charts Section - Flexible Heights - HIDDEN ON MOBILE */}
+        <div className="hidden lg:flex lg:col-span-9 flex-col gap-4 min-h-0">
 
 
 

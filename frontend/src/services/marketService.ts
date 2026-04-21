@@ -1,8 +1,9 @@
 import axios from 'axios';
 
 const MARKET_API = '/api';
-const WS_PRICE_URL = `ws://${window.location.host}/ws/price`;
-const WS_ALERTS_URL = `ws://${window.location.host}/ws/alerts`;
+const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+const WS_PRICE_URL = `${wsProtocol}//${window.location.host}/ws/price`;
+const WS_ALERTS_URL = `${wsProtocol}//${window.location.host}/ws/alerts`;
 
 export const marketService = {
   fetchHistory: async (ticker: string, period: string, interval: string) => {

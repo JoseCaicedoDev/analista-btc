@@ -7,37 +7,21 @@ import { processIndicators, checkStrategy1H } from '../domain/indicators';
 const SCAN_INTERVAL_MS = 60_000;
 
 // Utilidad para reproducir sonido usando Web Audio API
-const playAlertSound = (type: 'LONG' | 'SHORT') => {
-  try {
-    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
-    if (!AudioContextClass) return;
-    const ctx = new AudioContextClass();
-    const osc = ctx.createOscillator();
-    const gainNode = ctx.createGain();
-    
-    osc.connect(gainNode);
-    gainNode.connect(ctx.destination);
-    
-    // Tonos diferentes
-    if (type === 'LONG') {
-      // Ascendente (Compra)
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(523.25, ctx.currentTime); // C5
-      osc.frequency.exponentialRampToValueAtTime(1046.50, ctx.currentTime + 0.1); // C6
-    } else {
-      // Descendente (Venta)
-      osc.type = 'square';
-      osc.frequency.setValueAtTime(1046.50, ctx.currentTime); // C6
-      osc.frequency.exponentialRampToValueAtTime(523.25, ctx.currentTime + 0.1); // C5
-    }
-    
-    gainNode.gain.setValueAtTime(0.5, ctx.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
-    
-    osc.start();
-    osc.stop(ctx.currentTime + 0.5);
-  } catch (e) {
-    console.error("Audio play failed", e);
+// Utilidad para reproducir sonido usando Web Audio API
+let _alarmAudio: HTMLAudioElement | null = null;
+
+const playAlarm = () => {
+  if (!_alarmAudio) {
+    _alarmAudio = new Audio('/alarma.mp3');
+    _alarmAudio.loop = true;
+  }
+  _alarmAudio.play().catch(e => console.error("Audio play failed", e));
+};
+
+const stopAlarm = () => {
+  if (_alarmAudio) {
+    _alarmAudio.pause();
+    _alarmAudio.currentTime = 0;
   }
 };
 
@@ -52,7 +36,10 @@ export type TokenScanStatus = {
   histColor: string | null;     // actual TradingView-style bar color
   macd: number | null;
   signalLine: number | null;
+  stochK: number | null;
+  stochD: number | null;
   alert: boolean;
+  alertType: 'long' | 'short' | 'neutral' | 'none';
   lastScanned: string;
 };
 
@@ -78,12 +65,22 @@ const emitScanStatus = (map: Record<string, TokenScanStatus>) => {
 
 // ─────────────────────────────────────────────────────────────────
 export const useStrategyScanner = () => {
-  const { availableAssets, addAlert } = useMarketStore();
+  const { availableAssets, addAlert, isAlarmActive, setAlarmActive } = useMarketStore();
   const lastChecked = useRef<Record<string, number>>({});
   const statusMap = useRef<Record<string, TokenScanStatus>>({});
   
   // Track last active signal string to avoid repeating alarms
-  const lastAlertedSignal = useRef<Record<string, 'long' | 'short' | 'none'>>({});
+  const lastAlertedSignal = useRef<Record<string, 'long' | 'short' | 'neutral' | 'none'>>({});
+  const alarmTypeRef = useRef<'LONG' | 'SHORT' | 'NEUTRAL'>('LONG');
+
+  // Alarm loop effect
+  useEffect(() => {
+    if (isAlarmActive) {
+      playAlarm();
+    } else {
+      stopAlarm();
+    }
+  }, [isAlarmActive]);
 
   const scanAll = useCallback(async () => {
     if (availableAssets.length === 0) return;
@@ -127,7 +124,10 @@ export const useStrategyScanner = () => {
           histColor: lastPoint?.histColor ?? null,
           macd: result.macd ?? null,
           signalLine: result.signalLine ?? null,
+          stochK: result.stochK ?? null,
+          stochD: result.stochD ?? null,
           alert: result.signal !== 'none',
+          alertType: result.signal,
           lastScanned: time,
         };
 
@@ -137,10 +137,11 @@ export const useStrategyScanner = () => {
         const currentActiveSignal = lastAlertedSignal.current[asset.symbol] || 'none';
         
         if (result.signal !== 'none' && result.signal !== currentActiveSignal) {
-          const type = result.signal.toUpperCase() as 'LONG' | 'SHORT';
+          const type = result.signal.toUpperCase() as 'LONG' | 'SHORT' | 'NEUTRAL';
           const lastPrice = history[history.length - 1].price;
           
-          playAlertSound(type); // Play sound alarm
+          alarmTypeRef.current = type;
+          setAlarmActive(true);
           
           addAlert({
             id: `${asset.symbol}-${now}`,
@@ -154,6 +155,8 @@ export const useStrategyScanner = () => {
             timeframe: '1H',
             rsi: result.rsi,
             hist: result.hist,
+            stochK: result.stochK,
+            stochD: result.stochD,
           });
         }
         
@@ -184,7 +187,10 @@ export const useStrategyScanner = () => {
           histColor: null,
           macd: null,
           signalLine: null,
+          stochK: null,
+          stochD: null,
           alert: false,
+          alertType: 'none',
           lastScanned: '--:--',
         };
       }

@@ -2,12 +2,26 @@ import React from 'react';
 import { ResponsiveContainer, ComposedChart, Line, XAxis, YAxis, CartesianGrid, ReferenceLine, Tooltip } from 'recharts';
 import { useMarketStore } from '../store/useMarketStore';
 
-export const StochRSIChart: React.FC = () => {
+interface StochRSIChartProps {
+  data?: any[];
+  title?: string;
+}
+
+export const StochRSIChart: React.FC<StochRSIChartProps> = ({ data: propData, title }) => {
   const { history1h } = useMarketStore();
-  const data = history1h.slice(-100);
+  const data = propData || history1h.slice(-100);
 
   return (
     <div className="w-full h-full min-h-0 flex flex-col">
+      {title && (
+        <div className="flex justify-between items-center mb-1 shrink-0 px-1">
+          <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">{title}</span>
+          <div className="flex gap-2 text-[8px] font-bold">
+            <span className="text-[#2962FF]">K</span>
+            <span className="text-[#FF6D00]">D</span>
+          </div>
+        </div>
+      )}
       <div className="flex-1 min-h-0">
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={data}>

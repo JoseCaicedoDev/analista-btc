@@ -11,6 +11,7 @@ interface MarketState {
   historyDaily: DataPoint[];
   historyWeekly: DataPoint[];
   alerts: any[];
+  isAlarmActive: boolean;
   
   fetchAssets: () => Promise<void>;
   setSelectedAsset: (asset: any) => void;
@@ -18,6 +19,7 @@ interface MarketState {
   fetchHistory: (ticker: string) => Promise<void>;
   addAlerts: (newAlerts: any[]) => void;
   addAlert: (alert: any) => void;
+  setAlarmActive: (active: boolean) => void;
 }
 
 export const useMarketStore = create<MarketState>((set, get) => ({
@@ -29,6 +31,7 @@ export const useMarketStore = create<MarketState>((set, get) => ({
   historyDaily: [],
   historyWeekly: [],
   alerts: [],
+  isAlarmActive: false,
   
   fetchAssets: async () => {
     try {
@@ -102,5 +105,6 @@ export const useMarketStore = create<MarketState>((set, get) => ({
   })),
   addAlert: (alert) => set((state) => ({
     alerts: [alert, ...state.alerts].slice(0, 50)
-  }))
+  })),
+  setAlarmActive: (active: boolean) => set({ isAlarmActive: active })
 }));

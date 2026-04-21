@@ -269,18 +269,20 @@ export const calculateRSIDivergence = (history: DataPoint[]) => {
 };
 
 export interface StrategyResult {
-  signal: 'long' | 'short' | 'none';
+  signal: 'long' | 'short' | 'neutral' | 'none';
   reason: string;
   rsi?: number;
   hist?: number;
   macd?: number;
   signalLine?: number;
+  stochK?: number;
+  stochD?: number;
 }
 
 /**
  * Estrategia 1H – Escáner de 3 señales
- * LONG (COMPRA): RSI < 30 (Rojo) + MACD Hist < 0 (Rojo) + Signal Line < 0 (Rojo)
- * SHORT (VENTA): RSI > 70 (Verde) + MACD Hist > 0 (Verde) + Signal Line >= 0 (Verde)
+ * LONG (COMPRA): RSI < 30 (Rojo) + MACD Hist < 0 (Rojo) + StochRSI K y D < 20 (Rojo)
+ * SHORT (VENTA): RSI > 70 (Verde) + MACD Hist > 0 (Verde) + StochRSI K y D > 80 (Verde)
  */
 export const checkStrategy1H = (history: DataPoint[]): StrategyResult => {
   if (history.length < 35) return { signal: 'none', reason: '' };
@@ -289,15 +291,15 @@ export const checkStrategy1H = (history: DataPoint[]): StrategyResult => {
 
   const rsi = last.rsi;
   const hist = last.hist;
-  const macdLine = last.macd;
-  const signalLine = last.signal;
+  const stochK = last.stochK;
+  const stochD = last.stochD;
 
   // All indicators must be available
   if (
     rsi === undefined || rsi === null ||
     hist === undefined || hist === null ||
-    macdLine === undefined || macdLine === null ||
-    signalLine === undefined || signalLine === null
+    stochK === undefined || stochK === null ||
+    stochD === undefined || stochD === null
   ) {
     return { signal: 'none', reason: '' };
   }
@@ -305,36 +307,49 @@ export const checkStrategy1H = (history: DataPoint[]): StrategyResult => {
   // Conditions for LONG (COMPRA) - All 3 badges RED
   const rsiRed = rsi < 30;
   const histRed = hist < 0;
-  const signalRed = signalLine < 0;
+  const stochRed = stochK < 20 && stochD < 20;
 
-  if (rsiRed && histRed && signalRed) {
+  if (rsiRed && histRed && stochRed) {
     return {
       signal: 'long',
-      reason: `COMPRA FUERTE: RSI Sobreventa, MACD y Señal bajistas`,
+      reason: `COMPRA FUERTE: RSI Sobreventa, MACD bajista y StochRSI < 20`,
       rsi,
       hist,
-      macd: macdLine,
-      signalLine,
+      stochK,
+      stochD,
     };
   }
 
   // Conditions for SHORT (VENTA) - All 3 badges GREEN
   const rsiGreen = rsi > 70;
   const histGreen = hist > 0;
-  const signalGreen = signalLine >= 0;
+  const stochGreen = stochK > 80 && stochD > 80;
 
-  if (rsiGreen && histGreen && signalGreen) {
+  if (rsiGreen && histGreen && stochGreen) {
     return {
       signal: 'short',
-      reason: `VENTA FUERTE: RSI Sobrecompra, MACD y Señal alcistas`,
+      reason: `VENTA FUERTE: RSI Sobrecompra, MACD alcista y StochRSI > 80`,
       rsi,
       hist,
-      macd: macdLine,
-      signalLine,
+      stochK,
+      stochD,
     };
   }
 
-  return { signal: 'none', reason: '', rsi, hist, macd: macdLine, signalLine };
+  // Conditions for NEUTRAL - 2 indicators are RED
+  const redCount = (rsiRed ? 1 : 0) + (histRed ? 1 : 0) + (stochRed ? 1 : 0);
+  if (redCount === 2) {
+    return {
+      signal: 'neutral',
+      reason: `ALERTA NEUTRAL: 2 de 3 indicadores en ROJO (Vigilancia)`,
+      rsi,
+      hist,
+      stochK,
+      stochD,
+    };
+  }
+
+  return { signal: 'none', reason: '', rsi, hist, stochK, stochD };
 };
 
 export const checkStrategy4H = (history: DataPoint[]) => {

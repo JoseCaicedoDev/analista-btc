@@ -51,24 +51,25 @@ const TokenStatusCard: React.FC<{ status: TokenScanStatus }> = ({ status }) => {
   // Badge 1: MACD histogram actual color (dark/light red or green like TradingView)
   const hStyle = histBadgeStyle(status.histColor, status.hist);
 
-  // Signal line above or below histogram bar
-  // signalLine > hist → "sobre barra" (visually the orange line is above the bar top/bottom)
-  const signalAboveBar =
-    status.signalLine !== null &&
-    status.hist !== null &&
-    status.signalLine > status.hist;
-
   return (
     <div
       className={`relative rounded-xl border p-4 overflow-hidden transition-all duration-500 ${
-        isAlert
+        status.alertType === 'long'
+          ? 'border-green-500/60 bg-green-950/20 shadow-lg shadow-green-500/10'
+          : status.alertType === 'short'
           ? 'border-red-500/60 bg-red-950/20 shadow-lg shadow-red-500/10'
+          : status.alertType === 'neutral'
+          ? 'border-yellow-500/60 bg-yellow-950/20 shadow-lg shadow-yellow-500/10'
           : 'border-slate-800/60 bg-slate-900/30'
       }`}
     >
       {/* Alert pulse dot */}
       {isAlert && (
-        <div className="absolute top-3 right-3 h-2.5 w-2.5 rounded-full bg-red-500 animate-pulse shadow shadow-red-400" />
+        <div className={`absolute top-3 right-3 h-2.5 w-2.5 rounded-full animate-pulse shadow ${
+          status.alertType === 'long' ? 'bg-green-500 shadow-green-400' : 
+          status.alertType === 'short' ? 'bg-red-500 shadow-red-400' : 
+          'bg-yellow-500 shadow-yellow-400'
+        }`} />
       )}
 
       {/* Header: symbol + time */}
@@ -98,21 +99,30 @@ const TokenStatusCard: React.FC<{ status: TokenScanStatus }> = ({ status }) => {
           {hStyle.label}
         </span>
 
-        {/* Signal line badge
-            Label  → Signal > hist bar? "sobre barra" : "bajo barra"
-            Color  → signalLine < 0 = rojo | signalLine >= 0 = verde            */}
+        {/* StochRSI badge
+            Label  → StochRSI K/D
+            Color  → < 20 = rojo | > 80 = verde | else = amarillo */}
         {(() => {
-          const sigNeg = status.signalLine !== null && status.signalLine < 0;
-          const sigNull = status.signalLine === null;
-          const posLabel = signalAboveBar ? '🟠 Señal sobre barra' : '🔵 Señal bajo barra';
-          const colorClass = sigNull
-            ? 'text-slate-400 bg-slate-800/60 border-slate-700/50'
-            : sigNeg
+          const k = status.stochK;
+          const d = status.stochD;
+          if (k === null || d === null) {
+            return (
+              <span className="text-xs font-bold px-2.5 py-1 rounded-lg border text-slate-400 bg-slate-800/60 border-slate-700/50">
+                ⚪ StochRSI
+              </span>
+            );
+          }
+          const isRed = k < 20 && d < 20;
+          const isGreen = k > 80 && d > 80;
+          const colorClass = isRed
             ? 'text-red-300 bg-red-500/20 border-red-500/50'
-            : 'text-green-300 bg-green-500/20 border-green-500/50';
+            : isGreen
+            ? 'text-green-300 bg-green-500/20 border-green-500/50'
+            : 'text-yellow-300 bg-yellow-500/15 border-yellow-500/30';
+          
           return (
             <span className={`text-xs font-bold px-2.5 py-1 rounded-lg border ${colorClass}`}>
-              {posLabel}
+              {isRed ? '🔴' : isGreen ? '🟢' : '🟡'} Stoch K:{k.toFixed(1)} D:{d.toFixed(1)}
             </span>
           );
         })()}
@@ -126,7 +136,7 @@ const TokenStatusCard: React.FC<{ status: TokenScanStatus }> = ({ status }) => {
 // ──────────────────────────────────────────────────────────────
 // Main AlertPanel
 export const AlertPanel: React.FC = () => {
-  const { alerts } = useMarketStore();
+  const { alerts, isAlarmActive, setAlarmActive } = useMarketStore();
   const [scanStatuses, setScanStatuses] = useState<Record<string, TokenScanStatus>>({});
 
   useEffect(() => {
@@ -177,9 +187,19 @@ export const AlertPanel: React.FC = () => {
             <Bell size={13} className="text-blue-500 animate-pulse" />
             Historial Alertas
           </h3>
+        <div className="flex items-center gap-2">
+          {isAlarmActive && (
+            <button
+              onClick={() => setAlarmActive(false)}
+              className="bg-red-600 hover:bg-red-500 text-white text-[10px] font-black px-3 py-1 rounded-full animate-bounce flex items-center gap-1 shadow-lg shadow-red-600/20 transition-colors"
+            >
+              <Zap size={10} fill="white" /> PARAR ALARMA
+            </button>
+          )}
           <span className="text-[9px] bg-blue-500/10 text-blue-400 px-2.5 py-1 rounded-full font-bold border border-blue-500/20 tracking-wider">
             {alerts.length > 0 ? `${alerts.length} alertas` : 'EN VIVO'}
           </span>
+        </div>
         </div>
 
         <div className="flex-1 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
@@ -195,13 +215,17 @@ export const AlertPanel: React.FC = () => {
               <div
                 key={idx}
                 className={`p-4 rounded-xl border relative overflow-hidden bg-slate-950/50 shadow-md ${
-                  a.type === 'LONG' ? 'border-green-500/30' : 'border-red-500/30'
+                  a.type === 'LONG' ? 'border-green-500/30' : 
+                  a.type === 'SHORT' ? 'border-red-500/30' : 
+                  'border-yellow-500/30'
                 }`}
               >
                 {/* Color strip */}
                 <div
                   className={`absolute left-0 top-0 bottom-0 w-1 ${
-                    a.type === 'LONG' ? 'bg-green-500' : 'bg-red-500'
+                    a.type === 'LONG' ? 'bg-green-500' : 
+                    a.type === 'SHORT' ? 'bg-red-500' : 
+                    'bg-yellow-500'
                   }`}
                 />
 
@@ -222,10 +246,12 @@ export const AlertPanel: React.FC = () => {
                     className={`p-1.5 rounded-lg ${
                       a.type === 'LONG'
                         ? 'bg-green-500/10 text-green-500'
-                        : 'bg-red-500/10 text-red-500'
+                        : a.type === 'SHORT'
+                        ? 'bg-red-500/10 text-red-500'
+                        : 'bg-yellow-500/10 text-yellow-500'
                     }`}
                   >
-                    {a.type === 'LONG' ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
+                    {a.type === 'LONG' ? <TrendingUp size={14} /> : a.type === 'SHORT' ? <TrendingDown size={14} /> : <Zap size={14} />}
                   </div>
                 </div>
 
@@ -233,17 +259,40 @@ export const AlertPanel: React.FC = () => {
                   {a.message}
                 </p>
 
-                {/* RSI + MACD values */}
-                {(a.rsi !== undefined || a.hist !== undefined) && (
+                {/* RSI + MACD + STOCH values */}
+                {(a.rsi !== undefined || a.hist !== undefined || a.stochK !== undefined) && (
                   <div className="flex items-center gap-2 pl-2 mb-2">
                     {a.rsi !== undefined && (
-                      <span className="text-xs font-bold text-red-300 bg-red-500/10 px-2 py-0.5 rounded border border-red-500/20">
+                      <span className={`text-xs font-bold px-2 py-0.5 rounded border ${
+                        a.type === 'LONG' 
+                          ? 'text-green-300 bg-green-500/10 border-green-500/20' 
+                          : a.type === 'SHORT'
+                          ? 'text-red-300 bg-red-500/10 border-red-500/20'
+                          : 'text-yellow-300 bg-yellow-500/10 border-yellow-500/20'
+                      }`}>
                         RSI {a.rsi.toFixed(1)}
                       </span>
                     )}
                     {a.hist !== undefined && (
-                      <span className="text-xs font-bold text-red-300 bg-red-500/10 px-2 py-0.5 rounded border border-red-500/20">
+                      <span className={`text-xs font-bold px-2 py-0.5 rounded border ${
+                        a.type === 'LONG' 
+                          ? 'text-green-300 bg-green-500/10 border-green-500/20' 
+                          : a.type === 'SHORT'
+                          ? 'text-red-300 bg-red-500/10 border-red-500/20'
+                          : 'text-yellow-300 bg-yellow-500/10 border-yellow-500/20'
+                      }`}>
                         HIST {a.hist.toFixed(4)}
+                      </span>
+                    )}
+                    {a.stochK !== undefined && a.stochD !== undefined && (
+                      <span className={`text-xs font-bold px-2 py-0.5 rounded border ${
+                        a.type === 'LONG' 
+                          ? 'text-green-300 bg-green-500/10 border-green-500/20' 
+                          : a.type === 'SHORT'
+                          ? 'text-red-300 bg-red-500/10 border-red-500/20'
+                          : 'text-yellow-300 bg-yellow-500/10 border-yellow-500/20'
+                      }`}>
+                        STOCH K:{a.stochK.toFixed(1)} D:{a.stochD.toFixed(1)}
                       </span>
                     )}
                   </div>

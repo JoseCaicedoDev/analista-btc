@@ -11,6 +11,7 @@ export interface DataPoint {
   macd?: number;
   signal?: number;
   histColor?: string;
+  ema200?: number;
 }
 
 export const calculateSMA = (data: (number | undefined | null)[], period: number): (number | null)[] => {
@@ -160,6 +161,7 @@ export const processIndicators = (history: DataPoint[]): DataPoint[] => {
   const rsi = calculateRSI(prices);
   const rsiMA = calculateSMA(rsi, 14);
   const { macdLine, signalLine, histogram, colors } = calculateMACD(prices);
+  const ema200 = calculateEMA(prices, 200);
   
   return history.map((d, i) => ({
     ...d,
@@ -168,9 +170,186 @@ export const processIndicators = (history: DataPoint[]): DataPoint[] => {
     macd: macdLine[i] ?? undefined,
     signal: signalLine[i] ?? undefined,
     hist: histogram[i] ?? undefined,
-    histColor: colors[i]
+    histColor: colors[i],
+    ema200: ema200[i] ?? undefined
   }));
 };
+export const calculateRSIDivergence = (history: DataPoint[]) => {
+  if (history.length < 50) return { type: 'none', value: 0 };
+  
+  const rsiValues = calculateRSI(history.map(d => d.price), 21);
+  const len = history.length;
+  
+  const isPivotLow = (index: number) => {
+    if (index < 5 || index > len - 6) return false;
+    const val = rsiValues[index];
+    if (val === null) return false;
+    for (let i = 1; i <= 5; i++) {
+        const prev = rsiValues[index - i];
+        const next = rsiValues[index + i];
+        if (prev === null || next === null || val >= prev || val >= next) return false;
+    }
+    return true;
+  };
 
+  const isPivotHigh = (index: number) => {
+    if (index < 5 || index > len - 6) return false;
+    const val = rsiValues[index];
+    if (val === null) return false;
+    for (let i = 1; i <= 5; i++) {
+        const prev = rsiValues[index - i];
+        const next = rsiValues[index + i];
+        if (prev === null || next === null || val <= prev || val <= next) return false;
+    }
+    return true;
+  };
 
+  // Regular Bullish Divergence
+  let lastPivotIdx = -1;
+  for (let i = len - 6; i > len - 40; i--) {
+    if (isPivotLow(i)) {
+      if (lastPivotIdx === -1) {
+        lastPivotIdx = i;
+      } else {
+        const currentPrice = history[lastPivotIdx].price;
+        const prevPrice = history[i].price;
+        const currentRSI = rsiValues[lastPivotIdx]!;
+        const prevRSI = rsiValues[i]!;
+        
+        if (currentPrice < prevPrice && currentRSI > prevRSI) {
+          return { type: 'bullish', value: currentRSI };
+        }
+        break;
+      }
+    }
+  }
 
+  // Regular Bearish Divergence
+  lastPivotIdx = -1;
+  for (let i = len - 6; i > len - 40; i--) {
+    if (isPivotHigh(i)) {
+      if (lastPivotIdx === -1) {
+        lastPivotIdx = i;
+      } else {
+        const currentPrice = history[lastPivotIdx].price;
+        const prevPrice = history[i].price;
+        const currentRSI = rsiValues[lastPivotIdx]!;
+        const prevRSI = rsiValues[i]!;
+        
+        if (currentPrice > prevPrice && currentRSI < prevRSI) {
+          return { type: 'bearish', value: currentRSI };
+        }
+        break;
+      }
+    }
+  }
+
+  return { type: 'none', value: rsiValues[len - 1] ?? 50 };
+};
+
+export interface StrategyResult {
+  signal: 'long' | 'short' | 'none';
+  reason: string;
+  rsi?: number;
+  hist?: number;
+  macd?: number;
+  signalLine?: number;
+}
+
+/**
+ * Estrategia 1H – Escáner de 3 señales
+ * LONG (COMPRA): RSI < 30 (Rojo) + MACD Hist < 0 (Rojo) + Signal Line < 0 (Rojo)
+ * SHORT (VENTA): RSI > 70 (Verde) + MACD Hist > 0 (Verde) + Signal Line >= 0 (Verde)
+ */
+export const checkStrategy1H = (history: DataPoint[]): StrategyResult => {
+  if (history.length < 35) return { signal: 'none', reason: '' };
+
+  const last = history[history.length - 1];
+
+  const rsi = last.rsi;
+  const hist = last.hist;
+  const macdLine = last.macd;
+  const signalLine = last.signal;
+
+  // All indicators must be available
+  if (
+    rsi === undefined || rsi === null ||
+    hist === undefined || hist === null ||
+    macdLine === undefined || macdLine === null ||
+    signalLine === undefined || signalLine === null
+  ) {
+    return { signal: 'none', reason: '' };
+  }
+
+  // Conditions for LONG (COMPRA) - All 3 badges RED
+  const rsiRed = rsi < 30;
+  const histRed = hist < 0;
+  const signalRed = signalLine < 0;
+
+  if (rsiRed && histRed && signalRed) {
+    return {
+      signal: 'long',
+      reason: `COMPRA FUERTE: RSI Sobreventa, MACD y Señal bajistas`,
+      rsi,
+      hist,
+      macd: macdLine,
+      signalLine,
+    };
+  }
+
+  // Conditions for SHORT (VENTA) - All 3 badges GREEN
+  const rsiGreen = rsi > 70;
+  const histGreen = hist > 0;
+  const signalGreen = signalLine >= 0;
+
+  if (rsiGreen && histGreen && signalGreen) {
+    return {
+      signal: 'short',
+      reason: `VENTA FUERTE: RSI Sobrecompra, MACD y Señal alcistas`,
+      rsi,
+      hist,
+      macd: macdLine,
+      signalLine,
+    };
+  }
+
+  return { signal: 'none', reason: '', rsi, hist, macd: macdLine, signalLine };
+};
+
+export const checkStrategy4H = (history: DataPoint[]) => {
+  if (history.length < 200) return { signal: 'none', reason: '' };
+  
+  const last = history[history.length - 1];
+  const prev = history[history.length - 2];
+  
+  if (!last.ema200 || !last.macd || !last.signal || !prev.macd || !prev.signal) return { signal: 'none', reason: '' };
+
+  const priceAboveEma = (last.price > last.ema200);
+  const macdBelowZero = (last.macd < 0 && last.signal < 0);
+  const macdAboveZero = (last.macd > 0 && last.signal > 0);
+  
+  // 1. LONG SIGNAL
+  // Trigger: MACD Line crosses ABOVE Signal Line below zero
+  const macdCrossUp = prev.macd < prev.signal && last.macd > last.signal;
+  // Extra Confirmation: Histogram dark red to light red
+  // We infer color from current and previous histogram values
+  const lastHist = last.hist ?? 0;
+  const prevHist = prev.hist ?? 0;
+  const histLosingBearishStrength = lastHist > prevHist && lastHist < 0;
+
+  if (priceAboveEma && macdBelowZero && macdCrossUp && histLosingBearishStrength) {
+    return { signal: 'long', reason: 'EMA 200 Trend + MACD Cross Up below zero' };
+  }
+
+  // 2. SHORT SIGNAL
+  // Trigger: MACD Line crosses BELOW Signal Line above zero
+  const macdCrossDown = prev.macd > prev.signal && last.macd < last.signal;
+  // Extra Confirmation: Histogram dark green to light green
+  const histLosingBullishStrength = lastHist < prevHist && lastHist > 0;
+
+  if (!priceAboveEma && macdAboveZero && macdCrossDown && histLosingBullishStrength) {
+    return { signal: 'short', reason: 'Below EMA 200 + MACD Cross Down above zero' };
+  }
+
+  return { signal: 'none', reason: '' };
+};

@@ -16,6 +16,7 @@ interface MarketState {
   setCurrentPrice: (price: number) => void;
   fetchHistory: (ticker: string) => Promise<void>;
   addAlerts: (newAlerts: any[]) => void;
+  addAlert: (alert: any) => void;
 }
 
 export const useMarketStore = create<MarketState>((set, get) => ({
@@ -92,6 +93,9 @@ export const useMarketStore = create<MarketState>((set, get) => ({
   },
 
   addAlerts: (newAlerts) => set((state) => ({ 
-    alerts: [...newAlerts, ...state.alerts].slice(0, 10) 
+    alerts: [...newAlerts, ...state.alerts].slice(0, 50) 
+  })),
+  addAlert: (alert) => set((state) => ({
+    alerts: [alert, ...state.alerts].slice(0, 50)
   }))
 }));

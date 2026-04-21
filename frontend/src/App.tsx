@@ -1,35 +1,38 @@
 import React from 'react';
-import { 
-  Zap,
+import {
   Layers,
   BarChart3
 } from 'lucide-react';
-import { 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
+import {
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
   ResponsiveContainer,
   ComposedChart,
   Bar,
-  Cell
+  Cell,
+  Line
 } from 'recharts';
 
 import { useMarketStore } from './store/useMarketStore';
 import { useMarketData, useAlerts } from './hooks/useMarketData';
+import { useStrategyScanner } from './hooks/useStrategyScanner';
 import { AssetSelector } from './components/AssetSelector';
 import { PriceCard } from './components/PriceCard';
 import { AlertPanel } from './components/AlertPanel';
 import { RSIChart } from './components/RSIChart';
 import { MACDChart } from './components/MACDChart';
 
+
 const App: React.FC = () => {
   const { history4h, historyDaily, historyWeekly, currentPrice } = useMarketStore();
   const [countdown, setCountdown] = React.useState(5);
-  
+
   // Use custom hooks for side effects
   useMarketData();
   useAlerts();
+  useStrategyScanner();
 
   // Countdown logic - resets when currentPrice changes
   React.useEffect(() => {
@@ -43,16 +46,6 @@ const App: React.FC = () => {
     return () => clearInterval(timer);
   }, []);
 
-  const getRSIColor = (val?: number) => {
-    if (!val) return 'text-blue-400';
-    if (val > 70) return 'text-red-400';
-    if (val < 30) return 'text-green-400';
-    return 'text-blue-400';
-  };
-
-  const lastRSI4h = history4h[history4h.length - 1]?.rsi;
-  const lastRSID = historyDaily[historyDaily.length - 1]?.rsi;
-  const lastRSIW = historyWeekly[historyWeekly.length - 1]?.rsi;
 
   return (
     <div className="h-screen bg-slate-950 text-slate-100 font-sans p-4 flex flex-col overflow-hidden">
@@ -84,53 +77,10 @@ const App: React.FC = () => {
 
       {/* Main Content Area - Expandable */}
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-4 min-h-0">
-        
+
         {/* Sidebar - Fixed/Scrollable Column */}
         <div className="lg:col-span-3 flex flex-col gap-4 min-h-0">
           <div className="shrink-0"><PriceCard /></div>
-
-          <div className="glass-panel p-5 shrink-0">
-            <h3 className="text-[10px] font-bold text-slate-400 uppercase mb-4 flex items-center gap-2 tracking-[0.2em]">
-              <Zap size={12} className="text-yellow-500" /> Resumen Fuerza
-            </h3>
-            
-            <div className="grid grid-cols-1 gap-4">
-              <div className="space-y-2">
-                <div className="grid grid-cols-3 gap-2">
-                  {[
-                    { label: '4H', val: lastRSI4h },
-                    { label: 'D', val: lastRSID },
-                    { label: 'W', val: lastRSIW }
-                  ].map((item, idx) => (
-                    <div key={idx} className="text-center p-2 bg-slate-950/50 rounded-lg border border-slate-800/50">
-                      <p className="text-[8px] text-slate-500 mb-0.5 font-bold uppercase">{item.label}</p>
-                      <p className={`text-xs font-black ${getRSIColor(item.val)}`}>
-                        {item.val ? item.val.toFixed(1) : '--'}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                {[
-                  { label: '4 Horas', data: history4h },
-                  { label: 'Diario', data: historyDaily },
-                  { label: 'Semanal', data: historyWeekly }
-                ].map((item, idx) => {
-                  const lastHist = item.data[item.data.length - 1]?.hist ?? 0;
-                  return (
-                    <div key={idx} className="flex justify-between items-center bg-slate-950/30 px-3 py-1.5 rounded-lg border border-slate-800/50">
-                      <span className="text-[10px] font-medium text-slate-400">{item.label}</span>
-                      <span className={`text-[9px] font-black tracking-widest ${lastHist >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                        {lastHist >= 0 ? 'ALCISTA' : 'BAJISTA'}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
 
           <div className="flex-1 min-h-0 overflow-hidden">
             <AlertPanel />
@@ -139,7 +89,7 @@ const App: React.FC = () => {
 
         {/* Charts Section - Flexible Heights */}
         <div className="lg:col-span-9 flex flex-col gap-4 min-h-0">
-          
+
           {/* Main Chart 4H - Real Candlestick Chart */}
           <div className="glass-panel p-5 h-[42%] shrink-0 flex flex-col">
             <div className="flex justify-between items-center mb-2">
@@ -149,6 +99,7 @@ const App: React.FC = () => {
               <div className="flex items-center gap-4 text-[9px] font-bold">
                 <div className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-green-500" /> ALCISTA</div>
                 <div className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-red-500" /> BAJISTA</div>
+                <div className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-[#ef4444]" /> EMA 200</div>
               </div>
             </div>
             <div className="flex-1 w-full min-h-0">
@@ -156,33 +107,43 @@ const App: React.FC = () => {
                 <ComposedChart data={history4h.slice(-100)}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} opacity={0.2} />
                   <XAxis dataKey="time" hide />
-                  <YAxis 
-                    domain={['auto', 'auto']} 
-                    orientation="right" 
-                    stroke="#475569" 
-                    fontSize={8} 
-                    tickLine={false} 
-                    axisLine={false} 
+                  <YAxis
+                    domain={['auto', 'auto']}
+                    orientation="right"
+                    stroke="#475569"
+                    fontSize={8}
+                    tickLine={false}
+                    axisLine={false}
                     tickFormatter={(val) => val.toLocaleString()}
                   />
-                  <Tooltip 
-                    contentStyle={{ backgroundColor: '#111218', border: '1px solid #1e293b', borderRadius: '12px', fontSize: '10px' }} 
+                  <Tooltip
+                    contentStyle={{ backgroundColor: '#111218', border: '1px solid #1e293b', borderRadius: '12px', fontSize: '10px' }}
                     labelFormatter={(t) => new Date(t).toLocaleString()}
                   />
-                  
+
                   {/* Candle Wick (Low to High) */}
                   <Bar dataKey={(d) => [d.low ?? d.price, d.high ?? d.price]} barSize={1} isAnimationActive={false}>
                     {history4h.slice(-100).map((entry, index) => (
                       <Cell key={`wick-${index}`} fill={(entry.close ?? 0) >= (entry.open ?? 0) ? '#22c55e' : '#ef4444'} />
                     ))}
                   </Bar>
-                  
-                  {/* Candle Body (Open to Close) */}
+
+                   {/* Candle Body (Open to Close) */}
                   <Bar dataKey={(d) => [d.open ?? d.price, d.close ?? d.price]} barSize={8} isAnimationActive={false}>
                     {history4h.slice(-100).map((entry, index) => (
                       <Cell key={`body-${index}`} fill={(entry.close ?? 0) >= (entry.open ?? 0) ? '#22c55e' : '#ef4444'} />
                     ))}
                   </Bar>
+                  
+                  {/* EMA 200 Line (Long term trend) */}
+                  <Line 
+                    type="monotone" 
+                    dataKey="ema200" 
+                    stroke="#ef4444" 
+                    strokeWidth={1.5} 
+                    dot={false} 
+                    isAnimationActive={false} 
+                  />
                 </ComposedChart>
               </ResponsiveContainer>
             </div>

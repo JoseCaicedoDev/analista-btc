@@ -1,29 +1,262 @@
-import React from 'react';
-import { Bell } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Bell, TrendingUp, TrendingDown, Activity, Zap, Clock } from 'lucide-react';
 import { useMarketStore } from '../../store/useMarketStore';
+import { subscribeScanStatus, type TokenScanStatus } from '../../hooks/useStrategyScanner';
 
-export const AlertPanel: React.FC = () => {
-  const { alerts } = useMarketStore();
+// ──────────────────────────────────────────────────────────────
+// RSI zone helpers
+const rsiZone = (value: number | null) => {
+  if (value === null) return 'neutral';
+  if (value < 30) return 'oversold';
+  if (value > 70) return 'overbought';
+  return 'neutral';
+};
+
+const rsiStyles = {
+  oversold:   { badge: 'text-red-300 bg-red-500/20 border-red-500/50',     value: '#ef4444' },
+  overbought: { badge: 'text-green-300 bg-green-500/20 border-green-500/50', value: '#22c55e' },
+  neutral:    { badge: 'text-yellow-300 bg-yellow-500/15 border-yellow-500/30', value: '#facc15' },
+};
+
+// RSI value with zone color
+const RsiValue: React.FC<{ value: number | null }> = ({ value }) => {
+  if (value === null) return <span className="text-slate-600 text-xs font-mono">—</span>;
+  const zone = rsiZone(value);
+  return (
+    <span style={{ color: rsiStyles[zone].value }} className="text-sm font-black font-mono">
+      {value.toFixed(1)}
+    </span>
+  );
+};
+
+// Map TradingView histogram colors to human-readable badge styles
+const histBadgeStyle = (histColor: string | null, hist: number | null) => {
+  if (hist === null || histColor === null) {
+    return { bg: 'bg-slate-800/60', border: 'border-slate-700/50', text: 'text-slate-400', label: '⚪ MACD neu' };
+  }
+  switch (histColor) {
+    case '#ff5252': return { bg: 'bg-red-900/40',  border: 'border-red-600/50',  text: 'text-red-300',  label: '🔴 Rojo oscuro ↓' };
+    case '#ffcdd2': return { bg: 'bg-red-900/20',  border: 'border-red-400/30',  text: 'text-red-200',  label: '🔴 Rojo claro ↑' };
+    case '#26a69a': return { bg: 'bg-teal-900/40', border: 'border-teal-500/50', text: 'text-teal-300', label: '🟢 Verde oscuro ↑' };
+    case '#b2dfdb': return { bg: 'bg-teal-900/20', border: 'border-teal-400/30', text: 'text-teal-200', label: '🟢 Verde claro ↓' };
+    default:        return { bg: 'bg-slate-800/60', border: 'border-slate-700/50', text: 'text-slate-400', label: '⚪ MACD' };
+  }
+};
+
+// ──────────────────────────────────────────────────────────────
+// Single token card
+const TokenStatusCard: React.FC<{ status: TokenScanStatus }> = ({ status }) => {
+  const isAlert = status.alert;
+
+  // Badge 1: MACD histogram actual color (dark/light red or green like TradingView)
+  const hStyle = histBadgeStyle(status.histColor, status.hist);
+
+  // Signal line above or below histogram bar
+  // signalLine > hist → "sobre barra" (visually the orange line is above the bar top/bottom)
+  const signalAboveBar =
+    status.signalLine !== null &&
+    status.hist !== null &&
+    status.signalLine > status.hist;
 
   return (
-    <div className="glass-panel p-6 min-h-[160px]">
-      <h3 className="text-xs font-bold text-slate-400 uppercase mb-5 flex items-center gap-2 tracking-widest">
-        <Bell size={14} className="text-blue-400" /> Historial Alertas
-      </h3>
-      <div className="space-y-3 max-h-[350px] overflow-y-auto pr-2">
-        {alerts.length === 0 ? (
-          <p className="text-[11px] text-slate-600 italic">Buscando patrones en 4H, D, W...</p>
+    <div
+      className={`relative rounded-xl border p-4 overflow-hidden transition-all duration-500 ${
+        isAlert
+          ? 'border-red-500/60 bg-red-950/20 shadow-lg shadow-red-500/10'
+          : 'border-slate-800/60 bg-slate-900/30'
+      }`}
+    >
+      {/* Alert pulse dot */}
+      {isAlert && (
+        <div className="absolute top-3 right-3 h-2.5 w-2.5 rounded-full bg-red-500 animate-pulse shadow shadow-red-400" />
+      )}
+
+      {/* Header: symbol + time */}
+      <div className="flex items-center gap-2 mb-3">
+        <span
+          className="h-3 w-3 rounded-full shrink-0"
+          style={{ backgroundColor: status.color }}
+        />
+        <span className="text-base font-black text-white tracking-wide">
+          {status.symbol}
+        </span>
+        <span className="text-xs text-slate-500 font-medium ml-auto">
+          {status.lastScanned}
+        </span>
+      </div>
+
+      {/* Indicator badges */}
+      <div className="flex items-center gap-2 flex-wrap">
+
+        {/* RSI badge — red <30, yellow 30-70, green >70 */}
+        <span className={`flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-lg border ${rsiStyles[rsiZone(status.rsi)].badge}`}>
+          RSI&nbsp;<RsiValue value={status.rsi} />
+        </span>
+
+        {/* MACD Histogram badge — color matches actual bar color */}
+        <span className={`text-xs font-bold px-2.5 py-1 rounded-lg border ${hStyle.bg} ${hStyle.border} ${hStyle.text}`}>
+          {hStyle.label}
+        </span>
+
+        {/* Signal line badge
+            Label  → Signal > hist bar? "sobre barra" : "bajo barra"
+            Color  → signalLine < 0 = rojo | signalLine >= 0 = verde            */}
+        {(() => {
+          const sigNeg = status.signalLine !== null && status.signalLine < 0;
+          const sigNull = status.signalLine === null;
+          const posLabel = signalAboveBar ? '🟠 Señal sobre barra' : '🔵 Señal bajo barra';
+          const colorClass = sigNull
+            ? 'text-slate-400 bg-slate-800/60 border-slate-700/50'
+            : sigNeg
+            ? 'text-red-300 bg-red-500/20 border-red-500/50'
+            : 'text-green-300 bg-green-500/20 border-green-500/50';
+          return (
+            <span className={`text-xs font-bold px-2.5 py-1 rounded-lg border ${colorClass}`}>
+              {posLabel}
+            </span>
+          );
+        })()}
+
+      </div>
+
+    </div>
+  );
+};
+
+// ──────────────────────────────────────────────────────────────
+// Main AlertPanel
+export const AlertPanel: React.FC = () => {
+  const { alerts } = useMarketStore();
+  const [scanStatuses, setScanStatuses] = useState<Record<string, TokenScanStatus>>({});
+
+  useEffect(() => {
+    const unsub = subscribeScanStatus(setScanStatuses);
+    return unsub;
+  }, []);
+
+  const statusList = Object.values(scanStatuses);
+
+  return (
+    <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 min-h-0 flex flex-col h-full gap-5">
+
+      {/* ── Section 1: Tokens en Vigilancia ── */}
+      <div className="shrink-0">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-xs font-black text-slate-300 uppercase tracking-[0.2em] flex items-center gap-2">
+            <Activity size={13} className="text-indigo-400" />
+            Tokens en Estudio · 1H
+          </h3>
+          <span className="text-[9px] bg-indigo-500/10 text-indigo-400 px-2.5 py-1 rounded-full font-bold border border-indigo-500/20 tracking-wider">
+            RSI&lt;30 + MACD↓
+          </span>
+        </div>
+
+        {statusList.length === 0 ? (
+          <div className="flex items-center justify-center h-14 opacity-30">
+            <Clock size={16} className="mr-2" />
+            <span className="text-xs text-slate-500 font-bold uppercase tracking-widest">
+              Iniciando escaneo…
+            </span>
+          </div>
         ) : (
-          alerts.map((a, idx) => (
-            <div key={idx} className="bg-slate-950/80 p-3 rounded-xl border-l-4 border-indigo-500 shadow-lg">
-              <div className="flex justify-between items-center mb-1">
-                <span className="text-[9px] font-black text-indigo-400 uppercase tracking-tighter">{a.type}</span>
-                <span className="text-[8px] text-slate-600 font-bold">NOW</span>
-              </div>
-              <p className="text-[11px] font-semibold text-slate-300 leading-snug">{a.msg}</p>
-            </div>
-          ))
+          <div className="grid grid-cols-1 gap-2">
+            {statusList.map((s) => (
+              <TokenStatusCard key={s.symbol} status={s} />
+            ))}
+          </div>
         )}
+      </div>
+
+      {/* Divider */}
+      <div className="shrink-0 border-t border-slate-800/70" />
+
+      {/* ── Section 2: Historial de Alertas ── */}
+      <div className="flex flex-col flex-1 min-h-0">
+        <div className="flex items-center justify-between mb-3 shrink-0">
+          <h3 className="text-xs font-black text-slate-300 uppercase tracking-[0.2em] flex items-center gap-2">
+            <Bell size={13} className="text-blue-500 animate-pulse" />
+            Historial Alertas
+          </h3>
+          <span className="text-[9px] bg-blue-500/10 text-blue-400 px-2.5 py-1 rounded-full font-bold border border-blue-500/20 tracking-wider">
+            {alerts.length > 0 ? `${alerts.length} alertas` : 'EN VIVO'}
+          </span>
+        </div>
+
+        <div className="flex-1 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
+          {alerts.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-24 opacity-25">
+              <Zap size={22} className="mb-2" />
+              <p className="text-xs text-slate-500 font-bold uppercase tracking-widest text-center">
+                Esperando señal 1H…
+              </p>
+            </div>
+          ) : (
+            alerts.map((a, idx) => (
+              <div
+                key={idx}
+                className={`p-4 rounded-xl border relative overflow-hidden bg-slate-950/50 shadow-md ${
+                  a.type === 'LONG' ? 'border-green-500/30' : 'border-red-500/30'
+                }`}
+              >
+                {/* Color strip */}
+                <div
+                  className={`absolute left-0 top-0 bottom-0 w-1 ${
+                    a.type === 'LONG' ? 'bg-green-500' : 'bg-red-500'
+                  }`}
+                />
+
+                <div className="flex justify-between items-start mb-2 pl-2">
+                  <div className="flex items-center gap-2">
+                    {a.color && (
+                      <span
+                        className="h-2.5 w-2.5 rounded-full shrink-0"
+                        style={{ backgroundColor: a.color }}
+                      />
+                    )}
+                    <h4 className="text-sm font-black text-white">{a.symbol}</h4>
+                    <span className="text-[9px] font-black tracking-widest px-1.5 py-0.5 rounded bg-slate-900 text-slate-400 border border-slate-800">
+                      {a.timeframe ?? '1H'}
+                    </span>
+                  </div>
+                  <div
+                    className={`p-1.5 rounded-lg ${
+                      a.type === 'LONG'
+                        ? 'bg-green-500/10 text-green-500'
+                        : 'bg-red-500/10 text-red-500'
+                    }`}
+                  >
+                    {a.type === 'LONG' ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
+                  </div>
+                </div>
+
+                <p className="text-xs text-slate-400 font-medium leading-relaxed mb-2 pl-2">
+                  {a.message}
+                </p>
+
+                {/* RSI + MACD values */}
+                {(a.rsi !== undefined || a.hist !== undefined) && (
+                  <div className="flex items-center gap-2 pl-2 mb-2">
+                    {a.rsi !== undefined && (
+                      <span className="text-xs font-bold text-red-300 bg-red-500/10 px-2 py-0.5 rounded border border-red-500/20">
+                        RSI {a.rsi.toFixed(1)}
+                      </span>
+                    )}
+                    {a.hist !== undefined && (
+                      <span className="text-xs font-bold text-red-300 bg-red-500/10 px-2 py-0.5 rounded border border-red-500/20">
+                        HIST {a.hist.toFixed(4)}
+                      </span>
+                    )}
+                  </div>
+                )}
+
+                <div className="flex justify-between items-center text-[9px] font-bold uppercase tracking-widest text-slate-500 pl-2">
+                  <span>$ {a.price?.toLocaleString()}</span>
+                  <span>{a.time}</span>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
       </div>
     </div>
   );

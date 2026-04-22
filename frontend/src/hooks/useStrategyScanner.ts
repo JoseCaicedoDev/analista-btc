@@ -116,22 +116,22 @@ export const useStrategyScanner = () => {
         const result = checkStrategy1H(processed);
         const rsiDaily = processedDaily.length > 0 ? processedDaily[processedDaily.length - 1].rsi : null;
         
-        // Calculate RSI Daily Slope (last 3 candles)
+        // Calculate RSI Daily Slope (last 2 candles)
         let rsiDailySlope: '+' | '-' | '0' = '0';
-        if (processedDaily.length >= 3) {
+        if (processedDaily.length >= 2) {
           const currentRSI = processedDaily[processedDaily.length - 1].rsi || 0;
-          const prevRSI = processedDaily[processedDaily.length - 3].rsi || 0;
+          const prevRSI = processedDaily[processedDaily.length - 2].rsi || 0;
           if (currentRSI > prevRSI) rsiDailySlope = '+';
           else if (currentRSI < prevRSI) rsiDailySlope = '-';
         }
 
         const macdHistColorDaily = processedDaily.length > 0 ? processedDaily[processedDaily.length - 1].histColor : null;
         
-        // Calculate MACD Daily Slope (last 3 candles) - Using Blue Line (MACD)
+        // Calculate MACD Daily Slope (last 2 candles) - Using Blue Line (MACD)
         let macdDailySlope: '+' | '-' | '0' = '0';
-        if (processedDaily.length >= 3) {
+        if (processedDaily.length >= 2) {
           const currentMACD = processedDaily[processedDaily.length - 1].macd || 0;
-          const prevMACD = processedDaily[processedDaily.length - 3].macd || 0;
+          const prevMACD = processedDaily[processedDaily.length - 2].macd || 0;
           if (currentMACD > prevMACD) macdDailySlope = '+';
           else if (currentMACD < prevMACD) macdDailySlope = '-';
         }

@@ -8,13 +8,13 @@ import { BarChart3, LineChart, Activity, Clock } from 'lucide-react';
 import { cn } from '../../utils/cn';
 
 export const AnalyticsMatrix: React.FC = () => {
-  const { history4h, historyDaily, historyWeekly } = useMarketStore();
-  const [activeTab, setActiveTab] = useState<'4h' | 'daily' | 'weekly'>('4h');
+  const { history1h, history4h, historyDaily } = useMarketStore();
+  const [activeTab, setActiveTab] = useState<'1h' | '4h' | 'daily'>('1h');
 
   const timeframes = [
+    { id: '1h', label: '1 Hora', data: history1h },
     { id: '4h', label: '4 Horas', data: history4h },
     { id: 'daily', label: 'Diario', data: historyDaily },
-    { id: 'weekly', label: 'Semanal', data: historyWeekly },
   ] as const;
 
   const indicators = [

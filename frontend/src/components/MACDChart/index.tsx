@@ -32,13 +32,23 @@ export const MACDChart: React.FC<MACDChartProps> = ({
               cursor={{ stroke: '#38bdf8', strokeWidth: 1, strokeDasharray: '4 4' }}
             />
             <Bar dataKey="hist" isAnimationActive={false}>
-              {data.map((entry, index) => (
-                <Cell
-                  key={`cell-${index}`}
-                  fill={entry.histColor === 'green' || entry.histColor === 'lime' ? '#10b981' : '#ef4444'}
-                  fillOpacity={entry.histColor === 'lime' || entry.histColor === 'red' ? 1 : 0.4}
-                />
-              ))}
+              {data.map((entry, index) => {
+                const color = entry.histColor?.toLowerCase() || '';
+                let fill = '#374151'; // Neutral default
+                
+                // Map trading colors
+                if (color === '#26a69a' || color === 'green') fill = '#26a69a'; // Verde oscuro
+                else if (color === '#b2dfdb' || color === 'lime') fill = '#b2dfdb'; // Verde claro
+                else if (color === '#ff5252' || color === 'red') fill = '#ff5252'; // Rojo oscuro
+                else if (color === '#ffcdd2' || color === 'maroon') fill = '#ffcdd2'; // Rojo claro
+                
+                return (
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={fill}
+                  />
+                );
+              })}
             </Bar>
             <Line type="monotone" dataKey="macd" stroke="#3b82f6" strokeWidth={1.5} dot={false} isAnimationActive={false} name="MACD" />
             <Line type="monotone" dataKey="signal" stroke="#f59e0b" strokeWidth={1.5} dot={false} isAnimationActive={false} name="Signal" />

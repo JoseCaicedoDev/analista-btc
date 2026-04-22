@@ -20,8 +20,8 @@ export const StochRSIChart: React.FC<StochRSIChartProps> = ({ data: propData, ti
         <div className="flex justify-between items-center mb-2 shrink-0 px-1">
           <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">{title}</span>
           <div className="flex gap-3 text-[9px] font-bold">
-            <span className="text-primary-500">K</span>
-            <span className="text-amber-500">D</span>
+            <span className="text-blue-500 text-[10px]">K</span>
+            <span className="text-orange-500 text-[10px]">D</span>
           </div>
         </div>
       )}
@@ -30,8 +30,8 @@ export const StochRSIChart: React.FC<StochRSIChartProps> = ({ data: propData, ti
           <AreaChart data={data} syncId={syncId}>
             <defs>
               <linearGradient id="colorK" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#0ea5e9" stopOpacity={0.1}/>
-                <stop offset="95%" stopColor="#0ea5e9" stopOpacity={0}/>
+                <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.1}/>
+                <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" vertical={false} opacity={0.2} />
@@ -52,25 +52,25 @@ export const StochRSIChart: React.FC<StochRSIChartProps> = ({ data: propData, ti
               cursor={{ stroke: '#38bdf8', strokeWidth: 1, strokeDasharray: '4 4' }}
             />
 
-            <ReferenceLine y={80} stroke="#ef4444" strokeDasharray="3 3" opacity={0.3} label={{ position: 'right', value: 'Over', fill: '#ef4444', fontSize: 8 }} />
-            <ReferenceLine y={20} stroke="#10b981" strokeDasharray="3 3" opacity={0.3} label={{ position: 'right', value: 'Under', fill: '#10b981', fontSize: 8 }} />
+            <ReferenceLine y={80} stroke="#ef4444" strokeDasharray="3 3" opacity={0.3} />
+            <ReferenceLine y={20} stroke="#10b981" strokeDasharray="3 3" opacity={0.3} />
 
-            {/* D Line (Amber) */}
+            {/* D Line (Orange) */}
             <Area
               type="monotone"
               dataKey="stochD"
-              stroke="#f59e0b"
+              stroke="#f97316"
               strokeWidth={1.5}
               fill="transparent"
               dot={false}
               isAnimationActive={false}
               name="Stoch D"
             />
-            {/* K Line (Primary Blue) with Area Fill */}
+            {/* K Line (Blue) with Area Fill */}
             <Area
               type="monotone"
               dataKey="stochK"
-              stroke="#0ea5e9"
+              stroke="#3b82f6"
               strokeWidth={2}
               fillOpacity={1}
               fill="url(#colorK)"

@@ -11,21 +11,12 @@ export const FluidHeader: React.FC = () => {
         </div>
         <div>
           <h1 className="text-lg font-black text-white tracking-tight uppercase">
-            Centinela <span className="text-primary-500">Bitcoin</span>
+            Analista <span className="text-primary-500">BTC</span>
           </h1>
-          <div className="flex items-center gap-2">
-            <Badge variant="success" dot className="px-1.5 py-0 border-none bg-transparent text-[8px] uppercase tracking-widest opacity-80">
-              Multi-Timeframe Engine
-            </Badge>
-          </div>
         </div>
       </div>
 
       <div className="flex items-center gap-4">
-        <div className="hidden md:flex flex-col items-end mr-2">
-          <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Estado Sistema</span>
-          <span className="text-xs font-black text-emerald-500 uppercase">En Tiempo Real</span>
-        </div>
         <button className="relative p-2 rounded-xl bg-gray-900 border border-gray-800 text-gray-400 hover:text-white hover:bg-gray-800 transition-all">
           <Bell size={18} />
           <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-primary-500 rounded-full border-2 border-gray-900"></span>

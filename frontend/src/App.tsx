@@ -15,11 +15,11 @@ const App: React.FC = () => {
   return (
     <DashboardLayout
       sidebar={
-        <>
+        <div className="flex flex-col h-full gap-4 min-h-0">
           <PriceMonitor />
           <StatusMatrix />
           <HistoryPanel />
-        </>
+        </div>
       }
       main={<AnalyticsMatrix />}
     />

@@ -31,6 +31,7 @@ export type TokenScanStatus = {
   name: string;
   color: string;
   rsi: number | null;
+  rsiDaily: number | null;
   hist: number | null;
   prevHist: number | null;      // previous histogram value (to know if bar is dark or light)
   histColor: string | null;     // actual TradingView-style bar color
@@ -97,12 +98,19 @@ export const useStrategyScanner = () => {
           continue;
         }
 
-        // ── Fetch 1H candles (last 60 days gives ~1440 candles, plenty for MACD)
-        const history = await marketService.fetchHistory(asset.id, '60d', '1h');
+        // ── Fetch 1H and Daily candles
+        const [history, historyDaily] = await Promise.all([
+          marketService.fetchHistory(asset.id, '60d', '1h'),
+          marketService.fetchHistory(asset.id, 'max', '1d')
+        ]);
+
         if (!history || history.length < 35) continue;
 
         const processed = processIndicators(history);
+        const processedDaily = historyDaily ? processIndicators(historyDaily) : [];
+        
         const result = checkStrategy1H(processed);
+        const rsiDaily = processedDaily.length > 0 ? processedDaily[processedDaily.length - 1].rsi : null;
 
         const time = new Date().toLocaleTimeString('es-CO', {
           hour: '2-digit',
@@ -119,6 +127,7 @@ export const useStrategyScanner = () => {
           name: asset.name,
           color: asset.color,
           rsi: result.rsi ?? null,
+          rsiDaily: rsiDaily ?? null,
           hist: lastPoint?.hist ?? null,
           prevHist: prevPoint?.hist ?? null,
           histColor: lastPoint?.histColor ?? null,
@@ -182,6 +191,7 @@ export const useStrategyScanner = () => {
           name: asset.name,
           color: asset.color,
           rsi: null,
+          rsiDaily: null,
           hist: null,
           prevHist: null,
           histColor: null,

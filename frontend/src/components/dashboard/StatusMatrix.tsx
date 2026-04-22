@@ -53,15 +53,15 @@ export const StatusMatrix: React.FC = () => {
                   </div>
                   
                   <div className="flex flex-wrap gap-2">
-                    {/* Badge RSI */}
+                    {/* Badge RSI (DAILY) */}
                     <div className={cn(
                       "flex items-center px-2.5 py-1 rounded-full border text-[11px] font-black whitespace-nowrap",
-                      rsiVariant === 'success' ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" :
-                      rsiVariant === 'danger' ? "bg-rose-500/10 border-rose-500/20 text-rose-400" :
+                      (s.rsiDaily || 0) > 70 ? "bg-rose-500/10 border-rose-500/20 text-rose-400" :
+                      (s.rsiDaily || 0) < 30 ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" :
                       "bg-amber-500/10 border-amber-500/20 text-amber-400"
                     )}>
-                      <span className="mr-1.5 opacity-70">RSI</span>
-                      <span>{s.rsi?.toFixed(1)}</span>
+                      <span className="mr-1.5 opacity-70">RSI D</span>
+                      <span>{s.rsiDaily?.toFixed(1) || '--'}</span>
                     </div>
 
                     {/* Badge MACD */}

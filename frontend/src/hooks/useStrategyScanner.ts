@@ -32,14 +32,17 @@ export type TokenScanStatus = {
   color: string;
   rsi: number | null;
   rsiDaily: number | null;
+  rsiDailySlope: '+' | '-' | '0';
   hist: number | null;
   macdHistColorDaily: string | null;
+  macdDailySlope: '+' | '-' | '0';
   prevHist: number | null;      // previous histogram value (to know if bar is dark or light)
   histColor: string | null;     // actual TradingView-style bar color
   macd: number | null;
   signalLine: number | null;
   stochK: number | null;
   stochD: number | null;
+  stochCross: 'up' | 'down' | null;
   alert: boolean;
   alertType: 'long' | 'short' | 'neutral' | 'none';
   lastScanned: string;
@@ -112,7 +115,43 @@ export const useStrategyScanner = () => {
         
         const result = checkStrategy1H(processed);
         const rsiDaily = processedDaily.length > 0 ? processedDaily[processedDaily.length - 1].rsi : null;
+        
+        // Calculate RSI Daily Slope (last 3 candles)
+        let rsiDailySlope: '+' | '-' | '0' = '0';
+        if (processedDaily.length >= 3) {
+          const currentRSI = processedDaily[processedDaily.length - 1].rsi;
+          const prevRSI = processedDaily[processedDaily.length - 3].rsi;
+          if (currentRSI > prevRSI) rsiDailySlope = '+';
+          else if (currentRSI < prevRSI) rsiDailySlope = '-';
+        }
+
         const macdHistColorDaily = processedDaily.length > 0 ? processedDaily[processedDaily.length - 1].histColor : null;
+        
+        // Calculate MACD Daily Slope (last 3 candles) - Using Blue Line (MACD)
+        let macdDailySlope: '+' | '-' | '0' = '0';
+        if (processedDaily.length >= 3) {
+          const currentMACD = processedDaily[processedDaily.length - 1].macd;
+          const prevMACD = processedDaily[processedDaily.length - 3].macd;
+          if (currentMACD > prevMACD) macdDailySlope = '+';
+          else if (currentMACD < prevMACD) macdDailySlope = '-';
+        }
+
+        // Detect Stochastic Cross in 1H (last 2 pairs of candles)
+        let stochCross: 'up' | 'down' | null = null;
+        if (processed.length >= 3) {
+          for (let i = processed.length - 1; i >= processed.length - 2; i--) {
+            const curr = processed[i];
+            const prev = processed[i-1];
+            if (prev.stochK! <= prev.stochD! && curr.stochK! > curr.stochD!) {
+              stochCross = 'up';
+              break;
+            }
+            if (prev.stochK! >= prev.stochD! && curr.stochK! < curr.stochD!) {
+              stochCross = 'down';
+              break;
+            }
+          }
+        }
 
         const time = new Date().toLocaleTimeString('es-CO', {
           hour: '2-digit',
@@ -130,7 +169,12 @@ export const useStrategyScanner = () => {
           color: asset.color,
           rsi: result.rsi ?? null,
           rsiDaily: rsiDaily ?? null,
+          rsiDailySlope,
           macdHistColorDaily: macdHistColorDaily ?? null,
+          macdDailySlope,
+          stochK: result.stochK ?? null,
+          stochD: result.stochD ?? null,
+          stochCross,
           hist: lastPoint?.hist ?? null,
           prevHist: prevPoint?.hist ?? null,
           histColor: lastPoint?.histColor ?? null,
@@ -195,7 +239,9 @@ export const useStrategyScanner = () => {
           color: asset.color,
           rsi: null,
           rsiDaily: null,
+          rsiDailySlope: '0',
           macdHistColorDaily: null,
+          macdDailySlope: '0',
           hist: null,
           prevHist: null,
           histColor: null,
@@ -203,6 +249,7 @@ export const useStrategyScanner = () => {
           signalLine: null,
           stochK: null,
           stochD: null,
+          stochCross: null,
           alert: false,
           alertType: 'none',
           lastScanned: '--:--',

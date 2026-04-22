@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { subscribeScanStatus, type TokenScanStatus } from '../../hooks/useStrategyScanner';
 import { Card } from '../shared/Card';
-import { Target, Activity, ArrowUp, ArrowDown } from 'lucide-react';
+import { Target, Activity, ArrowUp, ArrowDown, Zap } from 'lucide-react';
 
 export const StatusMatrix: React.FC = () => {
   const [statuses, setStatuses] = useState<Record<string, TokenScanStatus>>({});
@@ -58,7 +58,17 @@ export const StatusMatrix: React.FC = () => {
                       "bg-amber-500/10 border-amber-500/20 text-amber-400"
                     )}>
                       <span className="mr-1.5 opacity-70">RSI D</span>
-                      <span>{s.rsiDaily?.toFixed(1) || '--'}</span>
+                      <div className="flex items-center gap-1.5">
+                        <span>{s.rsiDaily?.toFixed(1) || '--'}</span>
+                        <span className={cn(
+                          "text-[10px]",
+                          s.rsiDailySlope === '+' ? "text-emerald-400" :
+                          s.rsiDailySlope === '-' ? "text-rose-400" :
+                          "text-gray-500"
+                        )}>
+                          ({s.rsiDailySlope})
+                        </span>
+                      </div>
                     </div>
 
                     {/* Badge MACD (DAILY) */}
@@ -76,7 +86,17 @@ export const StatusMatrix: React.FC = () => {
                             macdDaily.label.includes('Verde') ? 'bg-emerald-500' : 
                             macdDaily.label.includes('Rojo') ? 'bg-rose-500' : 'bg-gray-500'
                           )} />
-                          <span>{macdDaily.label} D</span>
+                          <div className="flex items-center gap-1.5">
+                            <span>{macdDaily.label} D</span>
+                            <span className={cn(
+                              "text-[10px]",
+                              s.macdDailySlope === '+' ? "text-emerald-400" :
+                              s.macdDailySlope === '-' ? "text-rose-400" :
+                              "text-gray-500"
+                            )}>
+                              ({s.macdDailySlope})
+                            </span>
+                          </div>
                         </div>
                       );
                     })()}
@@ -92,6 +112,17 @@ export const StatusMatrix: React.FC = () => {
                         (s.stochK || 0) > 80 ? 'bg-rose-500' : 
                         (s.stochK || 0) < 20 ? 'bg-emerald-500' : 'bg-amber-500'
                       )} />
+                      
+                      {s.stochCross && (
+                        <div className={cn(
+                          "flex items-center mr-2 px-1 rounded bg-white/10 animate-pulse",
+                          s.stochCross === 'up' ? "text-emerald-400" : "text-rose-400"
+                        )}>
+                          <Zap size={10} fill="currentColor" className="mr-0.5" />
+                          <span className="text-[8px]">{s.stochCross === 'up' ? '↑' : '↓'}</span>
+                        </div>
+                      )}
+
                       <span className="mr-1.5 opacity-70">Stoch 1H</span>
                       <div className="flex gap-2">
                         <span className="text-blue-400">K:{s.stochK?.toFixed(1)}</span>

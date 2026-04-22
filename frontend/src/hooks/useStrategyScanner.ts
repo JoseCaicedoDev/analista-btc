@@ -74,9 +74,13 @@ export const useStrategyScanner = () => {
   const lastChecked = useRef<Record<string, number>>({});
   const statusMap = useRef<Record<string, TokenScanStatus>>({});
   
-  // Track last active signal string to avoid repeating alarms
   const lastAlertedSignal = useRef<Record<string, 'long' | 'short' | 'neutral' | 'none'>>({});
   const alarmTypeRef = useRef<'LONG' | 'SHORT' | 'NEUTRAL'>('LONG');
+
+  // Live data from the store for the currently selected asset
+  const selectedAsset = useMarketStore(state => state.selectedAsset);
+  const history1h = useMarketStore(state => state.history1h);
+  const historyDaily = useMarketStore(state => state.historyDaily);
 
   // Alarm loop effect
   useEffect(() => {
@@ -86,6 +90,105 @@ export const useStrategyScanner = () => {
       stopAlarm();
     }
   }, [isAlarmActive]);
+
+  const calculateAssetStatus = useCallback((asset: any, processed1h: any[], processedDaily: any[], time: string, now: number) => {
+    const result = checkStrategy1H(processed1h);
+    const rsiDaily = processedDaily.length > 0 ? processedDaily[processedDaily.length - 1].rsi : null;
+    
+    // Calculate RSI Daily Slope (last 2 candles)
+    let rsiDailySlope: '+' | '-' | '0' = '0';
+    if (processedDaily.length >= 2) {
+      const currentRSI = processedDaily[processedDaily.length - 1].rsi || 0;
+      const prevRSI = processedDaily[processedDaily.length - 2].rsi || 0;
+      if (currentRSI > prevRSI) rsiDailySlope = '+';
+      else if (currentRSI < prevRSI) rsiDailySlope = '-';
+    }
+
+    const macdHistColorDaily = processedDaily.length > 0 ? processedDaily[processedDaily.length - 1].histColor : null;
+    
+    // Calculate MACD Daily Slope (last 2 candles) - Using Blue Line (MACD)
+    let macdDailySlope: '+' | '-' | '0' = '0';
+    if (processedDaily.length >= 2) {
+      const currentMACD = processedDaily[processedDaily.length - 1].macd || 0;
+      const prevMACD = processedDaily[processedDaily.length - 2].macd || 0;
+      if (currentMACD > prevMACD) macdDailySlope = '+';
+      else if (currentMACD < prevMACD) macdDailySlope = '-';
+    }
+
+    // Detect Stochastic Cross in 1H (last 2 pairs of candles)
+    let stochCross: 'up' | 'down' | null = null;
+    if (processed1h.length >= 3) {
+      for (let i = processed1h.length - 1; i >= processed1h.length - 2; i--) {
+        const curr = processed1h[i];
+        const prev = processed1h[i-1];
+        if (prev.stochK! <= prev.stochD! && curr.stochK! > curr.stochD!) {
+          stochCross = 'up';
+          break;
+        }
+        if (prev.stochK! >= prev.stochD! && curr.stochK! < curr.stochD!) {
+          stochCross = 'down';
+          break;
+        }
+      }
+    }
+
+    const lastPoint = processed1h[processed1h.length - 1];
+    const prevPoint = processed1h[processed1h.length - 2];
+
+    statusMap.current[asset.symbol] = {
+      symbol: asset.symbol,
+      name: asset.name,
+      color: asset.color,
+      rsi: result.rsi ?? null,
+      rsiDaily: rsiDaily ?? null,
+      rsiDailySlope,
+      macdHistColorDaily: macdHistColorDaily ?? null,
+      macdDailySlope,
+      stochK: result.stochK ?? null,
+      stochD: result.stochD ?? null,
+      stochCross,
+      hist: lastPoint?.hist ?? null,
+      prevHist: prevPoint?.hist ?? null,
+      histColor: lastPoint?.histColor ?? null,
+      macd: result.macd ?? null,
+      signalLine: result.signalLine ?? null,
+      alert: result.signal !== 'none',
+      alertType: result.signal,
+      lastScanned: time,
+    };
+
+    emitScanStatus({ ...statusMap.current });
+
+    // ── Fire alert if strategy triggered and it's a NEW signal for this token
+    const currentActiveSignal = lastAlertedSignal.current[asset.symbol] || 'none';
+    
+    if (result.signal !== 'none' && result.signal !== currentActiveSignal) {
+      const type = result.signal.toUpperCase() as 'LONG' | 'SHORT' | 'NEUTRAL';
+      const lastPrice = processed1h[processed1h.length - 1].price;
+      
+      alarmTypeRef.current = type;
+      setAlarmActive(true);
+      
+      addAlert({
+        id: `${asset.symbol}-${now}`,
+        symbol: asset.symbol,
+        name: asset.name,
+        color: asset.color,
+        type,
+        price: lastPrice,
+        time,
+        message: result.reason,
+        timeframe: '1H',
+        rsi: result.rsi,
+        hist: result.hist,
+        stochK: result.stochK,
+        stochD: result.stochD,
+      });
+    }
+    
+    // Update the tracked signal
+    lastAlertedSignal.current[asset.symbol] = result.signal;
+  }, [addAlert, setAlarmActive]);
 
   const scanAll = useCallback(async () => {
     if (availableAssets.length === 0) return;
@@ -103,7 +206,7 @@ export const useStrategyScanner = () => {
         }
 
         // ── Fetch 1H and Daily candles
-        const [history, historyDaily] = await Promise.all([
+        const [history, historyDly] = await Promise.all([
           marketService.fetchHistory(asset.id, '60d', '1h'),
           marketService.fetchHistory(asset.id, 'max', '1d')
         ]);
@@ -111,111 +214,14 @@ export const useStrategyScanner = () => {
         if (!history || history.length < 35) continue;
 
         const processed = processIndicators(history);
-        const processedDaily = historyDaily ? processIndicators(historyDaily) : [];
+        const processedDaily = historyDly ? processIndicators(historyDly) : [];
         
-        const result = checkStrategy1H(processed);
-        const rsiDaily = processedDaily.length > 0 ? processedDaily[processedDaily.length - 1].rsi : null;
-        
-        // Calculate RSI Daily Slope (last 2 candles)
-        let rsiDailySlope: '+' | '-' | '0' = '0';
-        if (processedDaily.length >= 2) {
-          const currentRSI = processedDaily[processedDaily.length - 1].rsi || 0;
-          const prevRSI = processedDaily[processedDaily.length - 2].rsi || 0;
-          if (currentRSI > prevRSI) rsiDailySlope = '+';
-          else if (currentRSI < prevRSI) rsiDailySlope = '-';
-        }
-
-        const macdHistColorDaily = processedDaily.length > 0 ? processedDaily[processedDaily.length - 1].histColor : null;
-        
-        // Calculate MACD Daily Slope (last 2 candles) - Using Blue Line (MACD)
-        let macdDailySlope: '+' | '-' | '0' = '0';
-        if (processedDaily.length >= 2) {
-          const currentMACD = processedDaily[processedDaily.length - 1].macd || 0;
-          const prevMACD = processedDaily[processedDaily.length - 2].macd || 0;
-          if (currentMACD > prevMACD) macdDailySlope = '+';
-          else if (currentMACD < prevMACD) macdDailySlope = '-';
-        }
-
-        // Detect Stochastic Cross in 1H (last 2 pairs of candles)
-        let stochCross: 'up' | 'down' | null = null;
-        if (processed.length >= 3) {
-          for (let i = processed.length - 1; i >= processed.length - 2; i--) {
-            const curr = processed[i];
-            const prev = processed[i-1];
-            if (prev.stochK! <= prev.stochD! && curr.stochK! > curr.stochD!) {
-              stochCross = 'up';
-              break;
-            }
-            if (prev.stochK! >= prev.stochD! && curr.stochK! < curr.stochD!) {
-              stochCross = 'down';
-              break;
-            }
-          }
-        }
-
         const time = new Date().toLocaleTimeString('es-CO', {
           hour: '2-digit',
           minute: '2-digit',
         });
 
-        // ── Grab histogram color and prevHist from processed data
-        const lastPoint = processed[processed.length - 1];
-        const prevPoint = processed[processed.length - 2];
-
-        // ── Update live scan status (used by AlertPanel token grid)
-        statusMap.current[asset.symbol] = {
-          symbol: asset.symbol,
-          name: asset.name,
-          color: asset.color,
-          rsi: result.rsi ?? null,
-          rsiDaily: rsiDaily ?? null,
-          rsiDailySlope,
-          macdHistColorDaily: macdHistColorDaily ?? null,
-          macdDailySlope,
-          stochK: result.stochK ?? null,
-          stochD: result.stochD ?? null,
-          stochCross,
-          hist: lastPoint?.hist ?? null,
-          prevHist: prevPoint?.hist ?? null,
-          histColor: lastPoint?.histColor ?? null,
-          macd: result.macd ?? null,
-          signalLine: result.signalLine ?? null,
-          alert: result.signal !== 'none',
-          alertType: result.signal,
-          lastScanned: time,
-        };
-
-        emitScanStatus({ ...statusMap.current });
-
-        // ── Fire alert if strategy triggered and it's a NEW signal for this token
-        const currentActiveSignal = lastAlertedSignal.current[asset.symbol] || 'none';
-        
-        if (result.signal !== 'none' && result.signal !== currentActiveSignal) {
-          const type = result.signal.toUpperCase() as 'LONG' | 'SHORT' | 'NEUTRAL';
-          const lastPrice = history[history.length - 1].price;
-          
-          alarmTypeRef.current = type;
-          setAlarmActive(true);
-          
-          addAlert({
-            id: `${asset.symbol}-${now}`,
-            symbol: asset.symbol,
-            name: asset.name,
-            color: asset.color,
-            type,
-            price: lastPrice,
-            time,
-            message: result.reason,
-            timeframe: '1H',
-            rsi: result.rsi,
-            hist: result.hist,
-            stochK: result.stochK,
-            stochD: result.stochD,
-          });
-        }
-        
-        // Update the tracked signal
-        lastAlertedSignal.current[asset.symbol] = result.signal;
+        calculateAssetStatus(asset, processed, processedDaily, time, now);
 
         lastChecked.current[asset.symbol] = now;
       } catch (err) {

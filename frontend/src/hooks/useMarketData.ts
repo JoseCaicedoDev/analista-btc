@@ -11,22 +11,15 @@ export const useMarketData = () => {
   useEffect(() => {
     fetchHistory(selectedAsset.id);
 
-    // WebSocket: updates price display on every trade (lightweight)
+    // WebSocket: updates price display AND charts on every trade (miniTicker = 1/sec)
     const socket = marketService.subscribeToPrice(selectedAsset.id, (price) => {
       latestPrice.current = price;
       setCurrentPrice(price);
+      refreshIndicators(price); // <--- Actualiza las gráficas en vivo
     });
-
-    // Interval: recalculates all indicators every 5s using the latest price
-    const indicatorTimer = setInterval(() => {
-      if (latestPrice.current > 0) {
-        refreshIndicators(latestPrice.current);
-      }
-    }, INDICATOR_REFRESH_MS);
 
     return () => {
       socket.close();
-      clearInterval(indicatorTimer);
     };
   }, [selectedAsset, setCurrentPrice, refreshIndicators, fetchHistory]);
 };

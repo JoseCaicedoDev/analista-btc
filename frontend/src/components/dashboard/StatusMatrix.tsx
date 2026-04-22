@@ -17,11 +17,11 @@ export const StatusMatrix: React.FC = () => {
     const c = color.toLowerCase();
     
     if (c === '#26a69a' || c === 'green') 
-      return { label: 'Verde oscuro ↑', variant: 'danger' as const, icon: <ArrowUp size={10} /> };
+      return { label: 'Verde oscuro ↑', variant: 'warning' as const, icon: <ArrowUp size={10} /> };
     if (c === '#b2dfdb' || c === 'lime') 
       return { label: 'Verde claro ↑', variant: 'danger' as const, icon: <ArrowUp size={10} /> };
     if (c === '#ff5252' || c === 'red') 
-      return { label: 'Rojo oscuro ↓', variant: 'success' as const, icon: <ArrowDown size={10} /> };
+      return { label: 'Rojo oscuro ↓', variant: 'warning' as const, icon: <ArrowDown size={10} /> };
     if (c === '#ffcdd2' || c === 'maroon') 
       return { label: 'Rojo claro ↓', variant: 'success' as const, icon: <ArrowDown size={10} /> };
     
@@ -69,6 +69,7 @@ export const StatusMatrix: React.FC = () => {
                           "flex items-center px-2.5 py-1 rounded-full border text-[11px] font-black whitespace-nowrap",
                           macdDaily.variant === 'success' ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" :
                           macdDaily.variant === 'danger' ? "bg-rose-500/10 border-rose-500/20 text-rose-400" :
+                          macdDaily.variant === 'warning' ? "bg-amber-500/10 border-amber-500/20 text-amber-400" :
                           "bg-gray-900/50 border-gray-800/30 text-gray-400"
                         )}>
                           <div className={cn("w-2 h-2 rounded-full mr-2", 

@@ -27,7 +27,7 @@ export const RSIChart: React.FC<RSIChartProps> = ({ data: propData, syncId }) =>
             <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" vertical={false} opacity={0.2} />
             <XAxis dataKey="time" hide />
             <YAxis 
-              domain={[0, 100]} 
+              domain={[20, 80]} 
               orientation="right" 
               tick={{ fontSize: 9, fill: '#6b7280', fontWeight: 'bold' }} 
               axisLine={false} 

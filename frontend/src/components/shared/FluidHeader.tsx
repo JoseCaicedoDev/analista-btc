@@ -1,6 +1,5 @@
 import React from 'react';
 import { Activity, Bell } from 'lucide-react';
-import { Badge } from './Badge';
 
 export const FluidHeader: React.FC = () => {
   return (

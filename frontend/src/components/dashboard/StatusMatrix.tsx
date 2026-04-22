@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { subscribeScanStatus, type TokenScanStatus } from '../../hooks/useStrategyScanner';
 import { Card } from '../shared/Card';
-import { Badge } from '../shared/Badge';
-import { Target, Activity, BarChart2, Zap, ArrowUp, ArrowDown } from 'lucide-react';
+import { Target, Activity, ArrowUp, ArrowDown } from 'lucide-react';
 
 export const StatusMatrix: React.FC = () => {
   const [statuses, setStatuses] = useState<Record<string, TokenScanStatus>>({});

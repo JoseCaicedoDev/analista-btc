@@ -33,6 +33,7 @@ export type TokenScanStatus = {
   rsi: number | null;
   rsiDaily: number | null;
   hist: number | null;
+  macdHistColorDaily: string | null;
   prevHist: number | null;      // previous histogram value (to know if bar is dark or light)
   histColor: string | null;     // actual TradingView-style bar color
   macd: number | null;
@@ -111,6 +112,7 @@ export const useStrategyScanner = () => {
         
         const result = checkStrategy1H(processed);
         const rsiDaily = processedDaily.length > 0 ? processedDaily[processedDaily.length - 1].rsi : null;
+        const macdHistColorDaily = processedDaily.length > 0 ? processedDaily[processedDaily.length - 1].histColor : null;
 
         const time = new Date().toLocaleTimeString('es-CO', {
           hour: '2-digit',
@@ -128,6 +130,7 @@ export const useStrategyScanner = () => {
           color: asset.color,
           rsi: result.rsi ?? null,
           rsiDaily: rsiDaily ?? null,
+          macdHistColorDaily: macdHistColorDaily ?? null,
           hist: lastPoint?.hist ?? null,
           prevHist: prevPoint?.hist ?? null,
           histColor: lastPoint?.histColor ?? null,
@@ -192,6 +195,7 @@ export const useStrategyScanner = () => {
           color: asset.color,
           rsi: null,
           rsiDaily: null,
+          macdHistColorDaily: null,
           hist: null,
           prevHist: null,
           histColor: null,

@@ -63,19 +63,24 @@ export const StatusMatrix: React.FC = () => {
                       <span>{s.rsiDaily?.toFixed(1) || '--'}</span>
                     </div>
 
-                    {/* Badge MACD */}
-                    <div className={cn(
-                      "flex items-center px-2.5 py-1 rounded-full border text-[11px] font-black whitespace-nowrap",
-                      macd.variant === 'success' ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" :
-                      macd.variant === 'danger' ? "bg-rose-500/10 border-rose-500/20 text-rose-400" :
-                      "bg-gray-900/50 border-gray-800/30 text-gray-400"
-                    )}>
-                      <div className={cn("w-2 h-2 rounded-full mr-2", 
-                        macd.label.includes('Verde') ? 'bg-emerald-500' : 
-                        macd.label.includes('Rojo') ? 'bg-rose-500' : 'bg-gray-500'
-                      )} />
-                      <span>{macd.label}</span>
-                    </div>
+                    {/* Badge MACD (DAILY) */}
+                    {(() => {
+                      const macdDaily = getMACDStatus(s.macdHistColorDaily);
+                      return (
+                        <div className={cn(
+                          "flex items-center px-2.5 py-1 rounded-full border text-[11px] font-black whitespace-nowrap",
+                          macdDaily.variant === 'success' ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" :
+                          macdDaily.variant === 'danger' ? "bg-rose-500/10 border-rose-500/20 text-rose-400" :
+                          "bg-gray-900/50 border-gray-800/30 text-gray-400"
+                        )}>
+                          <div className={cn("w-2 h-2 rounded-full mr-2", 
+                            macdDaily.label.includes('Verde') ? 'bg-emerald-500' : 
+                            macdDaily.label.includes('Rojo') ? 'bg-rose-500' : 'bg-gray-500'
+                          )} />
+                          <span>{macdDaily.label} D</span>
+                        </div>
+                      );
+                    })()}
 
                     {/* Badge STOCH */}
                     <div className={cn(

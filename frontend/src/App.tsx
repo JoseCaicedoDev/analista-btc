@@ -15,7 +15,7 @@ import { StochRSIChart } from './components/StochRSIChart';
 
 
 const App: React.FC = () => {
-  const { history4h, historyDaily, historyWeekly } = useMarketStore();
+  const { history1h, history4h, historyDaily } = useMarketStore();
   const [countdown, setCountdown] = React.useState(5);
 
   // Use custom hooks for side effects
@@ -80,9 +80,9 @@ const App: React.FC = () => {
           {/* Indicators Row - Expanded to prevent overlap */}
           <div className="flex-1 min-h-0 grid grid-cols-3 gap-4">
             {[
+              { label: '1 HORA',  syncId: 'sync-1h',      rsi: history1h.slice(-100),      macd: history1h.slice(-100) },
               { label: '4 HORAS', syncId: 'sync-4h',      rsi: history4h.slice(-100),      macd: history4h.slice(-100) },
               { label: 'DIARIO',  syncId: 'sync-diario',  rsi: historyDaily.slice(-100),   macd: historyDaily.slice(-100) },
-              { label: 'SEMANAL', syncId: 'sync-semanal', rsi: historyWeekly.slice(-100),  macd: historyWeekly.slice(-100) },
             ].map((timeframe, idx) => (
               <div key={idx} className="flex flex-col gap-3 min-h-0">
                 <div className="flex-1 min-h-0">

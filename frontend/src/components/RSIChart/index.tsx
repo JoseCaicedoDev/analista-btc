@@ -1,5 +1,5 @@
 import React from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, ReferenceLine, ReferenceArea, ResponsiveContainer, Tooltip } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, ReferenceLine, ResponsiveContainer, Tooltip } from 'recharts';
 import type { DataPoint } from '../../domain/indicators';
 
 interface RSIChartProps {
@@ -9,33 +9,68 @@ interface RSIChartProps {
   syncId?: string;
 }
 
-export const RSIChart: React.FC<RSIChartProps> = ({ data, title, syncId }) => {
+export const RSIChart: React.FC<RSIChartProps> = ({ data: propData, syncId }) => {
+  // Limitar a los últimos 50 puntos
+  const data = propData.slice(-50);
+
   return (
-    <div className="glass-panel p-4 h-full flex flex-col min-h-0">
-      <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">{title}</h4>
-      <ResponsiveContainer width="100%" height="80%" debounce={50}>
-        <LineChart data={data} syncId={syncId}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
-          <XAxis dataKey="time" hide />
-          <YAxis domain={[0, 100]} orientation="right" stroke="#475569" fontSize={9} tickLine={false} axisLine={false} />
-          <Tooltip
-            contentStyle={{ backgroundColor: '#111218', border: 'none', borderRadius: '8px', fontSize: '10px' }}
-            labelFormatter={(t) => new Date(t * 1000).toLocaleString()}
-            formatter={(v) => [Number(v).toFixed(2), undefined]}
-            cursor={{ stroke: '#6366f1', strokeWidth: 1, strokeDasharray: '4 2' }}
-          />
-          <ReferenceLine y={70} stroke="#787B86" strokeDasharray="3 3" />
-          <ReferenceLine y={50} stroke="#787B8650" strokeDasharray="3 3" />
-          <ReferenceLine y={30} stroke="#787B86" strokeDasharray="3 3" />
+    <div className="w-full h-full min-h-0 flex flex-col group">
+      <div className="flex-1 min-h-0">
+        <ResponsiveContainer width="100%" height="100%">
+          <AreaChart data={data} syncId={syncId}>
+            <defs>
+              <linearGradient id="colorRsi" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.1}/>
+                <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" vertical={false} opacity={0.2} />
+            <XAxis dataKey="time" hide />
+            <YAxis 
+              domain={[0, 100]} 
+              orientation="right" 
+              tick={{ fontSize: 9, fill: '#6b7280', fontWeight: 'bold' }} 
+              axisLine={false} 
+              tickLine={false} 
+              ticks={[30, 50, 70]}
+            />
+            <Tooltip
+              contentStyle={{ backgroundColor: '#08090a', border: '1px solid #1f2937', borderRadius: '12px', fontSize: '10px' }}
+              labelFormatter={(t) => new Date(Number(t) * 1000).toLocaleTimeString()}
+              formatter={(v) => [Number(v).toFixed(1), undefined]}
+              itemStyle={{ fontSize: '10px', fontWeight: 'bold', padding: '2px 0' }}
+              cursor={{ stroke: '#8b5cf6', strokeWidth: 1, strokeDasharray: '4 4' }}
+            />
 
-          <ReferenceArea y1={70} y2={100} fill="rgba(34, 197, 94, 0.05)" />
-          <ReferenceArea y1={0} y2={30} fill="rgba(239, 68, 68, 0.05)" />
-          <ReferenceArea y1={30} y2={70} fill="rgba(126, 87, 194, 0.05)" />
+            <ReferenceLine y={70} stroke="#ef4444" strokeDasharray="3 3" opacity={0.3} />
+            <ReferenceLine y={30} stroke="#10b981" strokeDasharray="3 3" opacity={0.3} />
 
-          <Line type="monotone" dataKey="rsi" stroke="#7E57C2" strokeWidth={2} dot={false} isAnimationActive={false} />
-          <Line type="monotone" dataKey="rsiMA" stroke="#EAB308" strokeWidth={1} dot={false} isAnimationActive={false} />
-        </LineChart>
-      </ResponsiveContainer>
+            {/* RSI MA (Amber) */}
+            <Area
+              type="monotone"
+              dataKey="rsiMA"
+              stroke="#f59e0b"
+              strokeWidth={1}
+              fill="transparent"
+              dot={false}
+              isAnimationActive={false}
+              name="RSI MA"
+            />
+            {/* RSI Line (Violet) with Area Fill */}
+            <Area
+              type="monotone"
+              dataKey="rsi"
+              stroke="#8b5cf6"
+              strokeWidth={2}
+              fillOpacity={1}
+              fill="url(#colorRsi)"
+              dot={false}
+              isAnimationActive={false}
+              name="RSI"
+            />
+          </AreaChart>
+        </ResponsiveContainer>
+      </div>
     </div>
   );
 };

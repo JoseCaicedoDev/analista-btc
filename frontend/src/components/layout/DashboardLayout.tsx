@@ -20,7 +20,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ sidebar, main 
           </div>
 
           {/* Main Analytics Column: Charts */}
-          <div className="hidden lg:flex lg:col-span-9 flex-col gap-6 min-h-0 overflow-hidden">
+          <div className="flex lg:col-span-9 flex-col gap-6 min-h-0 overflow-hidden">
             {main}
           </div>
           

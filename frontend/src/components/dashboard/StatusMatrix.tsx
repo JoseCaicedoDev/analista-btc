@@ -29,7 +29,7 @@ export const StatusMatrix: React.FC = () => {
   };
 
   return (
-    <Card title="Escáner 1H" icon={<Target size={14} />} className="flex-1 min-h-0 flex flex-col">
+    <Card title="Escáner" icon={<Target size={14} />} className="flex-1 min-h-0 flex flex-col">
       <div className="flex-1 overflow-y-auto min-h-0 custom-scrollbar">
         <div className="p-3 space-y-3">
           {list.length === 0 ? (
@@ -91,7 +91,7 @@ export const StatusMatrix: React.FC = () => {
                         (s.stochK || 0) > 80 ? 'bg-rose-500' : 
                         (s.stochK || 0) < 20 ? 'bg-emerald-500' : 'bg-amber-500'
                       )} />
-                      <span className="mr-1.5 opacity-70">Stoch</span>
+                      <span className="mr-1.5 opacity-70">Stoch 1H</span>
                       <div className="flex gap-2">
                         <span className="text-blue-400">K:{s.stochK?.toFixed(1)}</span>
                         <span className="text-orange-400">D:{s.stochD?.toFixed(1)}</span>

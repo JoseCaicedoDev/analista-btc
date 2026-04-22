@@ -17,13 +17,13 @@ export const StatusMatrix: React.FC = () => {
     const c = color.toLowerCase();
     
     if (c === '#26a69a' || c === 'green') 
-      return { label: 'Verde oscuro ↑', variant: 'success' as const, icon: <ArrowUp size={10} /> };
+      return { label: 'Verde oscuro ↑', variant: 'danger' as const, icon: <ArrowUp size={10} /> };
     if (c === '#b2dfdb' || c === 'lime') 
-      return { label: 'Verde claro ↑', variant: 'success' as const, icon: <ArrowUp size={10} /> };
+      return { label: 'Verde claro ↑', variant: 'danger' as const, icon: <ArrowUp size={10} /> };
     if (c === '#ff5252' || c === 'red') 
-      return { label: 'Rojo oscuro ↓', variant: 'danger' as const, icon: <ArrowDown size={10} /> };
+      return { label: 'Rojo oscuro ↓', variant: 'success' as const, icon: <ArrowDown size={10} /> };
     if (c === '#ffcdd2' || c === 'maroon') 
-      return { label: 'Rojo claro ↓', variant: 'danger' as const, icon: <ArrowDown size={10} /> };
+      return { label: 'Rojo claro ↓', variant: 'success' as const, icon: <ArrowDown size={10} /> };
     
     return { label: 'Neutral', variant: 'neutral' as const, icon: null };
   };
@@ -40,7 +40,7 @@ export const StatusMatrix: React.FC = () => {
           ) : (
             list.map((s) => {
               const macd = getMACDStatus(s.histColor);
-              const rsiVariant = (s.rsi || 0) > 70 ? 'success' : (s.rsi || 0) < 30 ? 'danger' : 'warning';
+              const rsiVariant = (s.rsi || 0) > 70 ? 'danger' : (s.rsi || 0) < 30 ? 'success' : 'warning';
               
               return (
                 <div key={s.symbol} className="p-3 rounded-xl bg-gray-950/20 border border-gray-800/20 hover:border-primary-500/30 transition-all">
@@ -81,13 +81,13 @@ export const StatusMatrix: React.FC = () => {
                     {/* Badge STOCH */}
                     <div className={cn(
                       "flex items-center px-2.5 py-1 rounded-full border text-[11px] font-black whitespace-nowrap transition-colors",
-                      (s.stochK || 0) > 80 ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" :
-                      (s.stochK || 0) < 20 ? "bg-rose-500/10 border-rose-500/20 text-rose-400" :
+                      (s.stochK || 0) > 80 ? "bg-rose-500/10 border-rose-500/20 text-rose-400" :
+                      (s.stochK || 0) < 20 ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" :
                       "bg-amber-500/10 border-amber-500/20 text-amber-400"
                     )}>
                       <div className={cn("w-2 h-2 rounded-full mr-2", 
-                        (s.stochK || 0) > 80 ? 'bg-emerald-500' : 
-                        (s.stochK || 0) < 20 ? 'bg-rose-500' : 'bg-amber-500'
+                        (s.stochK || 0) > 80 ? 'bg-rose-500' : 
+                        (s.stochK || 0) < 20 ? 'bg-emerald-500' : 'bg-amber-500'
                       )} />
                       <span className="mr-1.5 opacity-70">Stoch</span>
                       <div className="flex gap-2">

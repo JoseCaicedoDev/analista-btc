@@ -1,7 +1,6 @@
-import React from 'react';
 import { useMarketStore } from '../../store/useMarketStore';
 import { Card } from '../shared/Card';
-import { TrendingUp, TrendingDown } from 'lucide-react';
+import { TrendingUp } from 'lucide-react';
 
 export const PriceMonitor: React.FC = () => {
   const { currentPrice, selectedAsset } = useMarketStore();

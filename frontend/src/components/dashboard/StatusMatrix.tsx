@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { subscribeScanStatus, TokenScanStatus } from '../../hooks/useStrategyScanner';
+import { subscribeScanStatus, type TokenScanStatus } from '../../hooks/useStrategyScanner';
 import { Card } from '../shared/Card';
 import { Badge } from '../shared/Badge';
 import { Target } from 'lucide-react';

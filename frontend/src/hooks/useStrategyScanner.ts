@@ -119,8 +119,8 @@ export const useStrategyScanner = () => {
         // Calculate RSI Daily Slope (last 3 candles)
         let rsiDailySlope: '+' | '-' | '0' = '0';
         if (processedDaily.length >= 3) {
-          const currentRSI = processedDaily[processedDaily.length - 1].rsi;
-          const prevRSI = processedDaily[processedDaily.length - 3].rsi;
+          const currentRSI = processedDaily[processedDaily.length - 1].rsi || 0;
+          const prevRSI = processedDaily[processedDaily.length - 3].rsi || 0;
           if (currentRSI > prevRSI) rsiDailySlope = '+';
           else if (currentRSI < prevRSI) rsiDailySlope = '-';
         }
@@ -130,8 +130,8 @@ export const useStrategyScanner = () => {
         // Calculate MACD Daily Slope (last 3 candles) - Using Blue Line (MACD)
         let macdDailySlope: '+' | '-' | '0' = '0';
         if (processedDaily.length >= 3) {
-          const currentMACD = processedDaily[processedDaily.length - 1].macd;
-          const prevMACD = processedDaily[processedDaily.length - 3].macd;
+          const currentMACD = processedDaily[processedDaily.length - 1].macd || 0;
+          const prevMACD = processedDaily[processedDaily.length - 3].macd || 0;
           if (currentMACD > prevMACD) macdDailySlope = '+';
           else if (currentMACD < prevMACD) macdDailySlope = '-';
         }
@@ -180,8 +180,6 @@ export const useStrategyScanner = () => {
           histColor: lastPoint?.histColor ?? null,
           macd: result.macd ?? null,
           signalLine: result.signalLine ?? null,
-          stochK: result.stochK ?? null,
-          stochD: result.stochD ?? null,
           alert: result.signal !== 'none',
           alertType: result.signal,
           lastScanned: time,

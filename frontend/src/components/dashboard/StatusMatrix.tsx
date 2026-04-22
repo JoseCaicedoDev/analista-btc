@@ -40,7 +40,6 @@ export const StatusMatrix: React.FC = () => {
           ) : (
             list.map((s) => {
               const macd = getMACDStatus(s.histColor);
-              const rsiVariant = (s.rsi || 0) > 70 ? 'danger' : (s.rsi || 0) < 30 ? 'success' : 'warning';
               
               return (
                 <div key={s.symbol} className="p-3 rounded-xl bg-gray-950/20 border border-gray-800/20 hover:border-primary-500/30 transition-all">

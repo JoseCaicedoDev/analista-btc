@@ -39,8 +39,6 @@ export const StatusMatrix: React.FC = () => {
             </div>
           ) : (
             list.map((s) => {
-              const macd = getMACDStatus(s.histColor);
-              
               return (
                 <div key={s.symbol} className="p-3 rounded-xl bg-gray-950/20 border border-gray-800/20 hover:border-primary-500/30 transition-all">
                   <div className="flex items-center justify-between mb-2 px-1">

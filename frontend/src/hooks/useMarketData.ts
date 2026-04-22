@@ -2,7 +2,6 @@ import { useEffect, useRef } from 'react';
 import { useMarketStore } from '../store/useMarketStore';
 import { marketService } from '../services/marketService';
 
-const INDICATOR_REFRESH_MS = 5000;
 
 export const useMarketData = () => {
   const { selectedAsset, setCurrentPrice, refreshIndicators, fetchHistory } = useMarketStore();

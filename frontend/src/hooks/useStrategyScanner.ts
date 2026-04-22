@@ -267,4 +267,17 @@ export const useStrategyScanner = () => {
     const interval = setInterval(scanAll, SCAN_INTERVAL_MS);
     return () => clearInterval(interval);
   }, [availableAssets, scanAll]);
+
+  // Live update effect for the selected asset
+  useEffect(() => {
+    if (!history1h.length || !historyDaily.length || !selectedAsset) return;
+    
+    const time = new Date().toLocaleTimeString('es-CO', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+    const now = Date.now();
+    
+    calculateAssetStatus(selectedAsset, history1h, historyDaily, time, now);
+  }, [history1h, historyDaily, selectedAsset, calculateAssetStatus]);
 };

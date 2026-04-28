@@ -131,15 +131,23 @@ export const StatusMatrix: React.FC = () => {
                     </div>
 
                     {/* Badge Divergence */}
-                    {s.divergence && s.divergence !== 'none' && (
+                    {s.divergence && (
                       <div className={cn(
                         "flex items-center px-2.5 py-1 rounded-full border text-[11px] font-black whitespace-nowrap",
                         s.divergence === 'bullish' ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" :
                         s.divergence === 'bearish' ? "bg-rose-500/10 border-rose-500/20 text-rose-400" :
-                        "bg-orange-500/10 border-orange-500/20 text-orange-400"
+                        s.divergence === 'bearish_vol' ? "bg-orange-500/10 border-orange-500/20 text-orange-400" :
+                        "bg-gray-900/50 border-gray-800/30 text-gray-500"
                       )}>
                         <Zap size={10} className="mr-1 opacity-70" />
-                        <span>DIV 1H {s.divergence === 'bullish' ? 'ALCISTA' : s.divergence === 'bearish' ? 'BAJISTA' : 'BAJISTA (VOL)'}</span>
+                        <span>
+                          DIV 1H {
+                            s.divergence === 'bullish' ? 'ALCISTA' : 
+                            s.divergence === 'bearish' ? 'BAJISTA' : 
+                            s.divergence === 'bearish_vol' ? 'BAJISTA (VOL)' : 
+                            '---'
+                          }
+                        </span>
                       </div>
                     )}
                   </div>

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { useMarketStore } from '../store/useMarketStore';
 import { marketService } from '../services/marketService';
-import { processIndicators, checkStrategy1H } from '../domain/indicators';
+import { processIndicators, checkStrategy1H, calculateRSIDivergence } from '../domain/indicators';
 
 // Intervalo de escaneo en ms (cada 60 segundos para 1H es suficiente)
 const SCAN_INTERVAL_MS = 60_000;
@@ -45,6 +45,7 @@ export type TokenScanStatus = {
   stochCross: 'up' | 'down' | null;
   alert: boolean;
   alertType: 'long' | 'short' | 'neutral' | 'none';
+  divergence: 'bullish' | 'bearish' | 'bearish_vol' | 'none';
   lastScanned: string;
 };
 
@@ -93,6 +94,7 @@ export const useStrategyScanner = () => {
 
   const calculateAssetStatus = useCallback((asset: any, processed1h: any[], processedDaily: any[], time: string, now: number) => {
     const result = checkStrategy1H(processed1h);
+    const div = calculateRSIDivergence(processed1h);
     const rsiDaily = processedDaily.length > 0 ? processedDaily[processedDaily.length - 1].rsi : null;
     
     // Calculate RSI Daily Slope (last 2 candles)
@@ -154,6 +156,7 @@ export const useStrategyScanner = () => {
       signalLine: result.signalLine ?? null,
       alert: result.signal !== 'none',
       alertType: result.signal,
+      divergence: div.type as any,
       lastScanned: time,
     };
 
@@ -256,6 +259,7 @@ export const useStrategyScanner = () => {
           stochCross: null,
           alert: false,
           alertType: 'none',
+          divergence: 'none',
           lastScanned: '--:--',
         };
       }

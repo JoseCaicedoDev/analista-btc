@@ -23,6 +23,7 @@ export const marketService = {
       low: parseFloat(k[3]),
       close: parseFloat(k[4]),
       price: parseFloat(k[4]),
+      volume: parseFloat(k[5]),
     }));
   },
 

@@ -1,43 +1,24 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useMarketStore } from '../store/useMarketStore';
 import { marketService } from '../services/marketService';
 
-export const useMarketData = () => {
-  const { selectedAsset, setCurrentPrice, fetchHistory, fetchAssets } = useMarketStore();
 
-  useEffect(() => {
-    fetchAssets();
-  }, [fetchAssets]);
+export const useMarketData = () => {
+  const { selectedAsset, setCurrentPrice, refreshIndicators, fetchHistory } = useMarketStore();
+  const latestPrice = useRef<number>(0);
 
   useEffect(() => {
     fetchHistory(selectedAsset.id);
-    
+
+    // WebSocket: updates price display AND charts on every trade (miniTicker = 1/sec)
     const socket = marketService.subscribeToPrice(selectedAsset.id, (price) => {
+      latestPrice.current = price;
       setCurrentPrice(price);
+      refreshIndicators(price); // <--- Actualiza las gráficas en vivo
     });
-
-    return () => socket.close();
-  }, [selectedAsset, setCurrentPrice, fetchHistory]);
-};
-
-export const useAlerts = () => {
-  const { history4h, addAlerts } = useMarketStore();
-
-  useEffect(() => {
-    const socket = marketService.subscribeToAlerts((alerts) => {
-      addAlerts(alerts);
-    });
-
-    // Periodically send data to evaluate alerts
-    const interval = setInterval(() => {
-      if (history4h.length > 0 && socket.readyState === WebSocket.OPEN) {
-        socket.send(JSON.stringify(history4h));
-      }
-    }, 10000);
 
     return () => {
       socket.close();
-      clearInterval(interval);
     };
-  }, [history4h, addAlerts]);
+  }, [selectedAsset, setCurrentPrice, refreshIndicators, fetchHistory]);
 };

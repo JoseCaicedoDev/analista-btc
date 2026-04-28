@@ -17,6 +17,9 @@ export const StrengthSummary: React.FC = () => {
     } else if (div.type === 'bearish') {
       color = 'text-red-500';
       bg = 'bg-red-500/10';
+    } else if (div.type === 'bearish_vol') {
+      color = 'text-orange-500';
+      bg = 'bg-orange-500/10';
     }
 
     return {
@@ -49,7 +52,7 @@ export const StrengthSummary: React.FC = () => {
               <span className="text-sm font-black text-blue-400 font-mono tracking-tighter">{row.value}</span>
             </div>
             <span className={`text-[8px] font-black tracking-widest ${row.color}`}>
-              {row.status === 'BULLISH' ? 'ALCISTA' : row.status === 'BEARISH' ? 'BAJISTA' : 'NEUTRAL'}
+              {row.status === 'BULLISH' ? 'ALCISTA' : row.status === 'BEARISH' ? 'BAJISTA' : row.status === 'BEARISH_VOL' ? 'BAJISTA (VOL)' : 'NEUTRAL'}
             </span>
           </div>
         ))}

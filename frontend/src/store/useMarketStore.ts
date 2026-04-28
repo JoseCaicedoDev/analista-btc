@@ -1,10 +1,11 @@
 import { create } from 'zustand';
 import { type DataPoint, processIndicators } from '../domain/indicators';
 import { marketService } from '../services/marketService';
+import { ASSETS } from '../config/assets';
 
 interface MarketState {
-  availableAssets: any[];
-  selectedAsset: { id: string; symbol: string; name: string; color: string };
+  availableAssets: typeof ASSETS;
+  selectedAsset: (typeof ASSETS)[0];
   currentPrice: number;
   history1h: DataPoint[];
   history4h: DataPoint[];
@@ -12,10 +13,10 @@ interface MarketState {
   historyWeekly: DataPoint[];
   alerts: any[];
   isAlarmActive: boolean;
-  
-  fetchAssets: () => Promise<void>;
-  setSelectedAsset: (asset: any) => void;
+
+  setSelectedAsset: (asset: (typeof ASSETS)[0]) => void;
   setCurrentPrice: (price: number) => void;
+  refreshIndicators: (price: number) => void;
   fetchHistory: (ticker: string) => Promise<void>;
   addAlerts: (newAlerts: any[]) => void;
   addAlert: (alert: any) => void;
@@ -23,8 +24,8 @@ interface MarketState {
 }
 
 export const useMarketStore = create<MarketState>((set, get) => ({
-  availableAssets: [],
-  selectedAsset: { id: 'BTC-USD', symbol: 'BTC', name: 'Bitcoin', color: '#F7931A' },
+  availableAssets: ASSETS,
+  selectedAsset: ASSETS[0],
   currentPrice: 0,
   history1h: [],
   history4h: [],
@@ -32,51 +33,38 @@ export const useMarketStore = create<MarketState>((set, get) => ({
   historyWeekly: [],
   alerts: [],
   isAlarmActive: false,
-  
-  fetchAssets: async () => {
-    try {
-      const assets = await marketService.fetchAssets();
-      if (assets && assets.length > 0) {
-        set({ availableAssets: assets });
-        // Optionally set the first asset as default if not already set or if it's the beginning
-        if (get().history4h.length === 0) {
-          get().setSelectedAsset(assets[0]);
-        }
-      }
-    } catch (error) {
-      console.error("Error fetching assets:", error);
-    }
-  },
 
   setSelectedAsset: (asset) => {
     set({ selectedAsset: asset, history1h: [], history4h: [], historyDaily: [], historyWeekly: [] });
     get().fetchHistory(asset.id);
   },
 
-  setCurrentPrice: (price) => {
+  // Lightweight: only updates the price number shown in PriceCard
+  setCurrentPrice: (price) => set({ currentPrice: price }),
+
+  // Heavy: updates the last candle in all timeframes and recalculates all indicators.
+  // Call this on a throttled interval (e.g. every 5s), not on every trade event.
+  refreshIndicators: (price) => {
     const state = get();
-    
-    // Función para actualizar el último precio en el historial y recalcular indicadores en tiempo real
-    const updateRealtime = (history: DataPoint[]) => {
+
+    const updateLast = (history: DataPoint[]) => {
       if (history.length === 0) return history;
       const last = history[history.length - 1];
-      const lastPoint: DataPoint = { 
-        ...last, 
+      const updated: DataPoint = {
+        ...last,
         price,
         close: price,
         high: Math.max(last.high ?? price, price),
-        low: Math.min(last.low ?? price, price)
+        low: Math.min(last.low ?? price, price),
       };
-      const newHistory = [...history.slice(0, -1), lastPoint];
-      return processIndicators(newHistory);
+      return processIndicators([...history.slice(0, -1), updated]);
     };
 
-    set({ 
-      currentPrice: price,
-      history1h: updateRealtime(state.history1h),
-      history4h: updateRealtime(state.history4h),
-      historyDaily: updateRealtime(state.historyDaily),
-      historyWeekly: updateRealtime(state.historyWeekly)
+    set({
+      history1h: updateLast(state.history1h),
+      history4h: updateLast(state.history4h),
+      historyDaily: updateLast(state.historyDaily),
+      historyWeekly: updateLast(state.historyWeekly),
     });
   },
 
@@ -86,25 +74,25 @@ export const useMarketStore = create<MarketState>((set, get) => ({
         marketService.fetchHistory(ticker, '60d', '1h'),
         marketService.fetchHistory(ticker, '2y', '4h'),
         marketService.fetchHistory(ticker, 'max', '1d'),
-        marketService.fetchHistory(ticker, 'max', '1wk')
+        marketService.fetchHistory(ticker, 'max', '1wk'),
       ]);
 
-      set({ 
+      set({
         history1h: processIndicators(h1),
-        history4h: processIndicators(h4), 
-        historyDaily: processIndicators(daily), 
-        historyWeekly: processIndicators(weekly) 
+        history4h: processIndicators(h4),
+        historyDaily: processIndicators(daily),
+        historyWeekly: processIndicators(weekly),
       });
     } catch (error) {
-      console.error("Error fetching market data:", error);
+      console.error('Error fetching market data:', error);
     }
   },
 
-  addAlerts: (newAlerts) => set((state) => ({ 
-    alerts: [...newAlerts, ...state.alerts].slice(0, 50) 
+  addAlerts: (newAlerts) => set((state) => ({
+    alerts: [...newAlerts, ...state.alerts].slice(0, 50),
   })),
   addAlert: (alert) => set((state) => ({
-    alerts: [alert, ...state.alerts].slice(0, 50)
+    alerts: [alert, ...state.alerts].slice(0, 50),
   })),
-  setAlarmActive: (active: boolean) => set({ isAlarmActive: active })
+  setAlarmActive: (active: boolean) => set({ isAlarmActive: active }),
 }));

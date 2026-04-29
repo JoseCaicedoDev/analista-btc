@@ -9,6 +9,8 @@ const intervalMap: Record<string, string> = {
   '1wk': '1w',
 };
 
+const MARKET_API = `http://${window.location.hostname}:4701/api/market`;
+
 export const marketService = {
   fetchHistory: async (ticker: string, _period: string, interval: string) => {
     const binanceInterval = intervalMap[interval] ?? interval;
@@ -36,5 +38,21 @@ export const marketService = {
       onMessage(parseFloat(data.c)); // 'c' = current close price
     };
     return socket;
+  },
+
+  fetchEtfs: async () => {
+    const response = await fetch(`${MARKET_API}/etfs`);
+    if (!response.ok) throw new Error(`Market API etfs error: ${response.status}`);
+    return await response.json();
+  },
+
+  fetchEtfHistory: async (ticker: string, period: string, interval: string) => {
+    const response = await fetch(`${MARKET_API}/${ticker}/history?period=${period}&interval=${interval}`);
+    if (!response.ok) throw new Error(`Market API history error: ${response.status}`);
+    const raw = await response.json();
+    return raw.map((k: any) => ({
+      ...k,
+      time: Math.floor(k.time / 1000), // convert ms to s for indicators.ts
+    }));
   },
 };

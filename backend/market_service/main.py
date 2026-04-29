@@ -29,6 +29,18 @@ async def get_assets():
         print(f"Error reading token configuration: {e}")
         return []
 
+@app.get("/api/market/etfs")
+async def get_etfs():
+    try:
+        config_path = "/app/config/etf.json"
+        if os.path.exists(config_path):
+            with open(config_path, "r") as f:
+                return json.load(f)
+        return []
+    except Exception as e:
+        print(f"Error reading ETF configuration: {e}")
+        return []
+
 @app.get("/api/market/{ticker}/history")
 async def get_history(ticker: str, period: str = "1mo", interval: str = "1h"):
     return service.get_history(ticker, period, interval)

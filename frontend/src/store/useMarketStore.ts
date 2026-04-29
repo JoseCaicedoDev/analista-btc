@@ -13,6 +13,8 @@ interface MarketState {
   historyWeekly: DataPoint[];
   alerts: any[];
   isAlarmActive: boolean;
+  etfs: any[];
+  etfData: Record<string, any>; // Stores processed data for each ETF
 
   setSelectedAsset: (asset: (typeof ASSETS)[0]) => void;
   setCurrentPrice: (price: number) => void;
@@ -21,6 +23,7 @@ interface MarketState {
   addAlerts: (newAlerts: any[]) => void;
   addAlert: (alert: any) => void;
   setAlarmActive: (active: boolean) => void;
+  fetchEtfs: () => Promise<void>;
 }
 
 export const useMarketStore = create<MarketState>((set, get) => ({
@@ -33,6 +36,8 @@ export const useMarketStore = create<MarketState>((set, get) => ({
   historyWeekly: [],
   alerts: [],
   isAlarmActive: false,
+  etfs: [],
+  etfData: {},
 
   setSelectedAsset: (asset) => {
     set({ selectedAsset: asset, history1h: [], history4h: [], historyDaily: [], historyWeekly: [] });
@@ -95,4 +100,37 @@ export const useMarketStore = create<MarketState>((set, get) => ({
     alerts: [alert, ...state.alerts].slice(0, 50),
   })),
   setAlarmActive: (active: boolean) => set({ isAlarmActive: active }),
+  
+  fetchEtfs: async () => {
+    try {
+      const etfList = await marketService.fetchEtfs();
+      set({ etfs: etfList });
+
+      // Fetch and process data for each ETF
+      const etfDataMap: Record<string, any> = {};
+      await Promise.all(etfList.map(async (etf: any) => {
+        try {
+          const history = await marketService.fetchEtfHistory(etf.symbol, '1mo', '1h');
+          const processed = processIndicators(history);
+          const lastPoint = processed[processed.length - 1];
+          
+          etfDataMap[etf.symbol] = {
+            rsi: lastPoint?.rsi ?? null,
+            macd: lastPoint?.macd ?? null,
+            signal: lastPoint?.signal ?? null,
+            stochK: lastPoint?.stochK ?? null,
+            stochD: lastPoint?.stochD ?? null,
+            price: lastPoint?.close ?? 0,
+            change: 0 // Could calculate from prev point if needed
+          };
+        } catch (err) {
+          console.error(`Error processing ETF ${etf.symbol}:`, err);
+        }
+      }));
+
+      set({ etfData: etfDataMap });
+    } catch (error) {
+      console.error('Error fetching ETFs:', error);
+    }
+  },
 }));

@@ -1,0 +1,8 @@
+[
+  { "id": "IBIT", "symbol": "IBIT", "name": "iShares Bitcoin Trust", "description": "ETF de Bitcoin de BlackRock", "color": "#000000" },
+  { "id": "FBTC", "symbol": "FBTC", "name": "Fidelity Wise Origin Bitcoin", "description": "ETF de Bitcoin de Fidelity", "color": "#005596" },
+  { "id": "ARKB", "symbol": "ARKB", "name": "ARK 21Shares Bitcoin ETF", "description": "ETF de Bitcoin de ARK Invest", "color": "#8DBA43" },
+  { "id": "BITO", "symbol": "BITO", "name": "ProShares Bitcoin Strategy", "description": "ETF de Futuros de Bitcoin", "color": "#002B49" },
+  { "id": "SPY", "symbol": "SPY", "name": "SPDR S&P 500 ETF Trust", "description": "Rastrea el índice S&P 500", "color": "#000000" },
+  { "id": "QQQ", "symbol": "QQQ", "name": "Invesco QQQ Trust", "description": "Rastrea el índice Nasdaq-100", "color": "#000000" }
+]

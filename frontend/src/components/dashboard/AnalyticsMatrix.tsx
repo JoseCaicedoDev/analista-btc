@@ -4,7 +4,8 @@ import { Card } from '../shared/Card';
 import { StochRSIChart } from '../StochRSIChart';
 import { RSIChart } from '../RSIChart';
 import { MACDChart } from '../MACDChart';
-import { BarChart3, LineChart, Activity, Clock } from 'lucide-react';
+import { PriceChart } from '../PriceChart';
+import { BarChart3, LineChart, Activity, Clock, CandlestickChart } from 'lucide-react';
 import { cn } from '../../utils/cn';
 
 export const AnalyticsMatrix: React.FC = () => {
@@ -18,6 +19,7 @@ export const AnalyticsMatrix: React.FC = () => {
   ] as const;
 
   const indicators = [
+    { label: 'Precio', icon: <CandlestickChart size={12} />, Component: PriceChart },
     { label: 'Stoch RSI', icon: <Activity size={12} />, Component: StochRSIChart },
     { label: 'RSI Relativo', icon: <LineChart size={12} />, Component: RSIChart },
     { label: 'MACD Pro', icon: <BarChart3 size={12} />, Component: MACDChart },
@@ -44,8 +46,11 @@ export const AnalyticsMatrix: React.FC = () => {
 
       {/* Analytics Display */}
       <div className="flex-1 overflow-hidden">
-        {/* Desktop Grid: Show all 3x3 */}
-        <div className="hidden lg:grid lg:grid-rows-3 gap-6 h-full min-h-0">
+        {/* Desktop Grid: Show all rows */}
+        <div className={cn(
+          "hidden lg:grid gap-6 h-full min-h-0",
+          indicators.length === 4 ? "grid-rows-4" : "grid-rows-3"
+        )}>
           {indicators.map((ind, i) => (
             <div key={i} className="grid grid-cols-3 gap-6">
               {timeframes.map((tf, j) => (

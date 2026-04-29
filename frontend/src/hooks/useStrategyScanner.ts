@@ -46,7 +46,6 @@ export type TokenScanStatus = {
   alert: boolean;
   alertType: 'long' | 'short' | 'neutral' | 'none';
   divergence: 'bullish' | 'bearish' | 'bearish_vol' | 'none';
-  histHistory: { hist: number; color: string }[];
   lastScanned: string;
 };
 
@@ -75,7 +74,7 @@ export const useStrategyScanner = () => {
   const { availableAssets, addAlert, isAlarmActive, setAlarmActive } = useMarketStore();
   const lastChecked = useRef<Record<string, number>>({});
   const statusMap = useRef<Record<string, TokenScanStatus>>({});
-  
+
   const lastAlertedSignal = useRef<Record<string, 'long' | 'short' | 'neutral' | 'none'>>({});
   const alarmTypeRef = useRef<'LONG' | 'SHORT' | 'NEUTRAL'>('LONG');
 
@@ -97,7 +96,7 @@ export const useStrategyScanner = () => {
     const result = checkStrategy1H(processed1h);
     const div = calculateRSIDivergence(processed1h);
     const rsiDaily = processedDaily.length > 0 ? processedDaily[processedDaily.length - 1].rsi : null;
-    
+
     // Calculate RSI Daily Slope (last 2 candles)
     let rsiDailySlope: '+' | '-' | '0' = '0';
     if (processedDaily.length >= 2) {
@@ -108,7 +107,7 @@ export const useStrategyScanner = () => {
     }
 
     const macdHistColorDaily = processedDaily.length > 0 ? processedDaily[processedDaily.length - 1].histColor : null;
-    
+
     // Calculate MACD Daily Slope (last 2 candles) - Using Blue Line (MACD)
     let macdDailySlope: '+' | '-' | '0' = '0';
     if (processedDaily.length >= 2) {
@@ -123,7 +122,7 @@ export const useStrategyScanner = () => {
     if (processed1h.length >= 3) {
       for (let i = processed1h.length - 1; i >= processed1h.length - 2; i--) {
         const curr = processed1h[i];
-        const prev = processed1h[i-1];
+        const prev = processed1h[i - 1];
         if (prev.stochK! <= prev.stochD! && curr.stochK! > curr.stochD!) {
           stochCross = 'up';
           break;
@@ -137,11 +136,6 @@ export const useStrategyScanner = () => {
 
     const lastPoint = processed1h[processed1h.length - 1];
     const prevPoint = processed1h[processed1h.length - 2];
-
-    const histHistory = processed1h.slice(-12).map(p => ({
-      hist: p.hist ?? 0,
-      color: p.histColor || '#334155'
-    }));
 
     statusMap.current[asset.symbol] = {
       symbol: asset.symbol,
@@ -163,7 +157,6 @@ export const useStrategyScanner = () => {
       alert: result.signal !== 'none',
       alertType: result.signal,
       divergence: div.type as any,
-      histHistory,
       lastScanned: time,
     };
 
@@ -171,14 +164,14 @@ export const useStrategyScanner = () => {
 
     // ── Fire alert if strategy triggered and it's a NEW signal for this token
     const currentActiveSignal = lastAlertedSignal.current[asset.symbol] || 'none';
-    
+
     if (result.signal !== 'none' && result.signal !== currentActiveSignal) {
       const type = result.signal.toUpperCase() as 'LONG' | 'SHORT' | 'NEUTRAL';
       const lastPrice = processed1h[processed1h.length - 1].price;
-      
+
       alarmTypeRef.current = type;
       setAlarmActive(true);
-      
+
       addAlert({
         id: `${asset.symbol}-${now}`,
         symbol: asset.symbol,
@@ -195,7 +188,7 @@ export const useStrategyScanner = () => {
         stochD: result.stochD,
       });
     }
-    
+
     // Update the tracked signal
     lastAlertedSignal.current[asset.symbol] = result.signal;
   }, [addAlert, setAlarmActive]);
@@ -225,7 +218,7 @@ export const useStrategyScanner = () => {
 
         const processed = processIndicators(history);
         const processedDaily = historyDly ? processIndicators(historyDly) : [];
-        
+
         const time = new Date().toLocaleTimeString('es-CO', {
           hour: '2-digit',
           minute: '2-digit',
@@ -267,7 +260,6 @@ export const useStrategyScanner = () => {
           alert: false,
           alertType: 'none',
           divergence: 'none',
-          histHistory: [],
           lastScanned: '--:--',
         };
       }
@@ -283,13 +275,13 @@ export const useStrategyScanner = () => {
   // Live update effect for the selected asset
   useEffect(() => {
     if (!history1h.length || !historyDaily.length || !selectedAsset) return;
-    
+
     const time = new Date().toLocaleTimeString('es-CO', {
       hour: '2-digit',
       minute: '2-digit',
     });
     const now = Date.now();
-    
+
     calculateAssetStatus(selectedAsset, history1h, historyDaily, time, now);
   }, [history1h, historyDaily, selectedAsset, calculateAssetStatus]);
 };

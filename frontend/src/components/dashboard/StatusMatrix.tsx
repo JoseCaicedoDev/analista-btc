@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { subscribeScanStatus, type TokenScanStatus } from '../../hooks/useStrategyScanner';
 import { Card } from '../shared/Card';
-import { Target, Activity, ArrowUp, ArrowDown, Zap, BarChart3 } from 'lucide-react';
-import { MiniHistogram } from '../shared/MiniHistogram';
+import { Target, Activity, ArrowUp, ArrowDown, Zap } from 'lucide-react';
 
 export const StatusMatrix: React.FC = () => {
   const [statuses, setStatuses] = useState<Record<string, TokenScanStatus>>({});
@@ -16,16 +15,16 @@ export const StatusMatrix: React.FC = () => {
   const getMACDStatus = (color: string | null) => {
     if (!color) return { label: '---', variant: 'neutral' as const, icon: null };
     const c = color.toLowerCase();
-    
-    if (c === '#26a69a' || c === 'green') 
+
+    if (c === '#26a69a' || c === 'green')
       return { label: 'Verde oscuro ↑', variant: 'warning' as const, icon: <ArrowUp size={10} /> };
-    if (c === '#b2dfdb' || c === 'lime') 
+    if (c === '#b2dfdb' || c === 'lime')
       return { label: 'Verde claro ↑', variant: 'danger' as const, icon: <ArrowUp size={10} /> };
-    if (c === '#ff5252' || c === 'red') 
+    if (c === '#ff5252' || c === 'red')
       return { label: 'Rojo oscuro ↓', variant: 'warning' as const, icon: <ArrowDown size={10} /> };
-    if (c === '#ffcdd2' || c === 'maroon') 
+    if (c === '#ffcdd2' || c === 'maroon')
       return { label: 'Rojo claro ↓', variant: 'success' as const, icon: <ArrowDown size={10} /> };
-    
+
     return { label: 'Neutral', variant: 'neutral' as const, icon: null };
   };
 
@@ -49,14 +48,14 @@ export const StatusMatrix: React.FC = () => {
                     </div>
                     <span className="text-[9px] font-bold text-gray-600 tabular-nums uppercase">{s.lastScanned}</span>
                   </div>
-                  
+
                   <div className="flex flex-wrap gap-2">
                     {/* Badge RSI (DAILY) */}
                     <div className={cn(
                       "flex items-center px-2.5 py-1 rounded-full border text-[11px] font-black whitespace-nowrap",
                       (s.rsiDaily || 0) > 70 ? "bg-rose-500/10 border-rose-500/20 text-rose-400" :
-                      (s.rsiDaily || 0) < 30 ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" :
-                      "bg-amber-500/10 border-amber-500/20 text-amber-400"
+                        (s.rsiDaily || 0) < 30 ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" :
+                          "bg-amber-500/10 border-amber-500/20 text-amber-400"
                     )}>
                       <span className="mr-1.5 opacity-70">RSI D</span>
                       <div className="flex items-center gap-1.5">
@@ -64,8 +63,8 @@ export const StatusMatrix: React.FC = () => {
                         <span className={cn(
                           "text-[10px]",
                           s.rsiDailySlope === '+' ? "text-emerald-400" :
-                          s.rsiDailySlope === '-' ? "text-rose-400" :
-                          "text-gray-500"
+                            s.rsiDailySlope === '-' ? "text-rose-400" :
+                              "text-gray-500"
                         )}>
                           ({s.rsiDailySlope})
                         </span>
@@ -79,21 +78,21 @@ export const StatusMatrix: React.FC = () => {
                         <div className={cn(
                           "flex items-center px-2.5 py-1 rounded-full border text-[11px] font-black whitespace-nowrap",
                           macdDaily.variant === 'success' ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" :
-                          macdDaily.variant === 'danger' ? "bg-rose-500/10 border-rose-500/20 text-rose-400" :
-                          macdDaily.variant === 'warning' ? "bg-amber-500/10 border-amber-500/20 text-amber-400" :
-                          "bg-gray-900/50 border-gray-800/30 text-gray-400"
+                            macdDaily.variant === 'danger' ? "bg-rose-500/10 border-rose-500/20 text-rose-400" :
+                              macdDaily.variant === 'warning' ? "bg-amber-500/10 border-amber-500/20 text-amber-400" :
+                                "bg-gray-900/50 border-gray-800/30 text-gray-400"
                         )}>
-                          <div className={cn("w-2 h-2 rounded-full mr-2", 
-                            macdDaily.label.includes('Verde') ? 'bg-emerald-500' : 
-                            macdDaily.label.includes('Rojo') ? 'bg-rose-500' : 'bg-gray-500'
+                          <div className={cn("w-2 h-2 rounded-full mr-2",
+                            macdDaily.label.includes('Verde') ? 'bg-emerald-500' :
+                              macdDaily.label.includes('Rojo') ? 'bg-rose-500' : 'bg-gray-500'
                           )} />
                           <div className="flex items-center gap-1.5">
                             <span>{macdDaily.label} D</span>
                             <span className={cn(
                               "text-[10px]",
                               s.macdDailySlope === '+' ? "text-emerald-400" :
-                              s.macdDailySlope === '-' ? "text-rose-400" :
-                              "text-gray-500"
+                                s.macdDailySlope === '-' ? "text-rose-400" :
+                                  "text-gray-500"
                             )}>
                               ({s.macdDailySlope})
                             </span>
@@ -102,24 +101,18 @@ export const StatusMatrix: React.FC = () => {
                       );
                     })()}
 
-                    {/* Momentum MiniChart */}
-                    <div className="flex items-center px-2 py-0.5 rounded-full border border-slate-800/50 bg-slate-900/40">
-                       <BarChart3 size={10} className="mr-1.5 text-slate-500" />
-                       <MiniHistogram data={s.histHistory} />
-                    </div>
-
                     {/* Badge STOCH */}
                     <div className={cn(
                       "flex items-center px-2.5 py-1 rounded-full border text-[11px] font-black whitespace-nowrap transition-colors",
                       (s.stochK || 0) > 80 ? "bg-rose-500/10 border-rose-500/20 text-rose-400" :
-                      (s.stochK || 0) < 20 ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" :
-                      "bg-amber-500/10 border-amber-500/20 text-amber-400"
+                        (s.stochK || 0) < 20 ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" :
+                          "bg-amber-500/10 border-amber-500/20 text-amber-400"
                     )}>
-                      <div className={cn("w-2 h-2 rounded-full mr-2", 
-                        (s.stochK || 0) > 80 ? 'bg-rose-500' : 
-                        (s.stochK || 0) < 20 ? 'bg-emerald-500' : 'bg-amber-500'
+                      <div className={cn("w-2 h-2 rounded-full mr-2",
+                        (s.stochK || 0) > 80 ? 'bg-rose-500' :
+                          (s.stochK || 0) < 20 ? 'bg-emerald-500' : 'bg-amber-500'
                       )} />
-                      
+
                       {s.stochCross && (
                         <div className={cn(
                           "flex items-center mr-2 px-1 rounded bg-white/10 animate-pulse",
@@ -142,17 +135,17 @@ export const StatusMatrix: React.FC = () => {
                       <div className={cn(
                         "flex items-center px-2.5 py-1 rounded-full border text-[11px] font-black whitespace-nowrap",
                         s.divergence === 'bullish' ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" :
-                        s.divergence === 'bearish' ? "bg-rose-500/10 border-rose-500/20 text-rose-400" :
-                        s.divergence === 'bearish_vol' ? "bg-orange-500/10 border-orange-500/20 text-orange-400" :
-                        "bg-gray-900/50 border-gray-800/30 text-gray-500"
+                          s.divergence === 'bearish' ? "bg-rose-500/10 border-rose-500/20 text-rose-400" :
+                            s.divergence === 'bearish_vol' ? "bg-orange-500/10 border-orange-500/20 text-orange-400" :
+                              "bg-gray-900/50 border-gray-800/30 text-gray-500"
                       )}>
                         <Zap size={10} className="mr-1 opacity-70" />
                         <span>
                           DIV 1H {
-                            s.divergence === 'bullish' ? 'ALCISTA' : 
-                            s.divergence === 'bearish' ? 'BAJISTA' : 
-                            s.divergence === 'bearish_vol' ? 'BAJISTA (VOL)' : 
-                            '---'
+                            s.divergence === 'bullish' ? 'ALCISTA' :
+                              s.divergence === 'bearish' ? 'BAJISTA' :
+                                s.divergence === 'bearish_vol' ? 'BAJISTA (VOL)' :
+                                  '---'
                           }
                         </span>
                       </div>

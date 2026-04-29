@@ -17,10 +17,10 @@ export const PriceChart: React.FC<PriceChartProps> = ({ data: propData, syncId }
     ...d,
     // La vela se compone de dos partes en Recharts: el cuerpo y la mecha
     // El cuerpo va de open a close
-    body: [d.open, d.close],
+    body: [d.open ?? 0, d.close ?? 0],
     // La mecha va de low a high
-    wick: [d.low, d.high],
-    color: d.close >= d.open ? '#10b981' : '#ef4444'
+    wick: [d.low ?? 0, d.high ?? 0],
+    color: (d.close ?? 0) >= (d.open ?? 0) ? '#10b981' : '#ef4444'
   }));
 
   return (

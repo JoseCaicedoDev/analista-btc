@@ -30,7 +30,7 @@ export const RSIChart: React.FC<RSIChartProps> = ({ data: propData, syncId }) =>
     <div className="w-full h-full min-h-0 flex flex-col group">
       <div className="flex-1 min-h-0">
         <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={data} syncId={syncId}>
+          <ComposedChart data={data} syncId={syncId} margin={{ top: 5, right: 0, bottom: 5, left: 0 }}>
             <defs>
               <linearGradient id="colorRsi" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.1}/>
@@ -40,12 +40,12 @@ export const RSIChart: React.FC<RSIChartProps> = ({ data: propData, syncId }) =>
             <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" vertical={false} opacity={0.2} />
             <XAxis dataKey="time" hide />
             <YAxis 
-              domain={[20, 80]} 
+              domain={[0, 100]} 
               orientation="right" 
               tick={{ fontSize: 9, fill: '#6b7280', fontWeight: 'bold' }} 
               axisLine={false} 
               tickLine={false} 
-              ticks={[30, 50, 70]}
+              ticks={[0, 30, 50, 70, 100]}
             />
             <Tooltip
               contentStyle={{ backgroundColor: '#08090a', border: '1px solid #1f2937', borderRadius: '12px', fontSize: '10px' }}

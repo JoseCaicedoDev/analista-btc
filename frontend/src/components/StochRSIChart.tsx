@@ -27,7 +27,7 @@ export const StochRSIChart: React.FC<StochRSIChartProps> = ({ data: propData, ti
       )}
       <div className="flex-1 min-h-0">
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={data} syncId={syncId}>
+          <AreaChart data={data} syncId={syncId} margin={{ top: 5, right: 0, bottom: 5, left: 0 }}>
             <defs>
               <linearGradient id="colorK" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.1}/>

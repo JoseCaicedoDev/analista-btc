@@ -97,7 +97,6 @@ export const useStrategyScanner = () => {
     const result = checkStrategy1H(processed4h);
     const div = calculateRSIDivergence(processed4h);
     const rsiDaily = processedDaily.length > 0 ? processedDaily[processedDaily.length - 1].rsi : null;
-    const rsiWeekly = processedWeekly.length > 0 ? processedWeekly[processedWeekly.length - 1].rsi : null;
 
     // Calculate RSI Daily Slope (last 2 candles)
     let rsiDailySlope: '+' | '-' | '0' = '0';
@@ -169,7 +168,7 @@ export const useStrategyScanner = () => {
 
     if (result.signal !== 'none' && result.signal !== currentActiveSignal) {
       const type = result.signal.toUpperCase() as 'LONG' | 'SHORT' | 'NEUTRAL';
-      const lastPrice = processed1h[processed1h.length - 1].price;
+      const lastPrice = processed4h[processed4h.length - 1].price;
 
       alarmTypeRef.current = type;
       setAlarmActive(true);

@@ -1,5 +1,6 @@
 import React from 'react';
 import { ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip, Bar, ComposedChart, Cell, Line } from 'recharts';
+import { calculateRSIDivergence } from '../../domain/indicators';
 import type { DataPoint } from '../../domain/indicators';
 
 interface PriceChartProps {
@@ -47,7 +48,7 @@ export const PriceChart: React.FC<PriceChartProps> = ({ data: propData, syncId }
             <Tooltip
               contentStyle={{ backgroundColor: '#08090a', border: '1px solid #1f2937', borderRadius: '12px', fontSize: '10px' }}
               labelFormatter={(t) => new Date(Number(t) * 1000).toLocaleString([], { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
-              formatter={(v: any, name, props) => {
+              formatter={(_v: any, name, props) => {
                 // props.payload contains the full data point
                 const d = props.payload;
                 if (name === 'body') {

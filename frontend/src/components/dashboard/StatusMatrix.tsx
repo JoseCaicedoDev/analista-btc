@@ -123,7 +123,7 @@ export const StatusMatrix: React.FC = () => {
                         </div>
                       )}
 
-                      <span className="mr-1.5 opacity-70">Stoch 1H</span>
+                      <span className="mr-1.5 opacity-70">Stoch 4H</span>
                       <div className="flex gap-2">
                         <span className="text-blue-400">K:{s.stochK?.toFixed(1)}</span>
                         <span className="text-orange-400">D:{s.stochD?.toFixed(1)}</span>
@@ -141,7 +141,7 @@ export const StatusMatrix: React.FC = () => {
                       )}>
                         <Zap size={10} className="mr-1 opacity-70" />
                         <span>
-                          DIV 1H {
+                          DIV 4H {
                             s.divergence === 'bullish' ? 'ALCISTA' :
                               s.divergence === 'bearish' ? 'BAJISTA' :
                                 s.divergence === 'bearish_vol' ? 'BAJISTA (VOL)' :

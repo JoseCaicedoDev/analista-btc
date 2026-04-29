@@ -208,10 +208,12 @@ export const calculateRSIDivergence = (history: DataPoint[]) => {
 
   const isPivotHigh = (index: number) => {
     if (index < pivotPeriod || index > len - 1 - pivotPeriod) return false;
-    const val = history[index].high ?? history[index].price;
+    const val = history[index].rsi;
+    if (val === undefined) return false;
     for (let i = 1; i <= pivotPeriod; i++) {
-        const prev = history[index - i].high ?? history[index - i].price;
-        const next = history[index + i].high ?? history[index + i].price;
+        const prev = history[index - i].rsi;
+        const next = history[index + i].rsi;
+        if (prev === undefined || next === undefined) return false;
         if (val <= prev || val <= next) return false;
     }
     return true;
@@ -219,10 +221,12 @@ export const calculateRSIDivergence = (history: DataPoint[]) => {
 
   const isPivotLow = (index: number) => {
     if (index < pivotPeriod || index > len - 1 - pivotPeriod) return false;
-    const val = history[index].low ?? history[index].price;
+    const val = history[index].rsi;
+    if (val === undefined) return false;
     for (let i = 1; i <= pivotPeriod; i++) {
-        const prev = history[index - i].low ?? history[index - i].price;
-        const next = history[index + i].low ?? history[index + i].price;
+        const prev = history[index - i].rsi;
+        const next = history[index + i].rsi;
+        if (prev === undefined || next === undefined) return false;
         if (val >= prev || val >= next) return false;
     }
     return true;

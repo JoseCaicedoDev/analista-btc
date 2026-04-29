@@ -80,8 +80,9 @@ export const useStrategyScanner = () => {
 
   // Live data from the store for the currently selected asset
   const selectedAsset = useMarketStore(state => state.selectedAsset);
-  const history1h = useMarketStore(state => state.history1h);
+  const history4h = useMarketStore(state => state.history4h);
   const historyDaily = useMarketStore(state => state.historyDaily);
+  const historyWeekly = useMarketStore(state => state.historyWeekly);
 
   // Alarm loop effect
   useEffect(() => {
@@ -92,10 +93,11 @@ export const useStrategyScanner = () => {
     }
   }, [isAlarmActive]);
 
-  const calculateAssetStatus = useCallback((asset: any, processed1h: any[], processedDaily: any[], time: string, now: number) => {
-    const result = checkStrategy1H(processed1h);
-    const div = calculateRSIDivergence(processed1h);
+  const calculateAssetStatus = useCallback((asset: any, processed4h: any[], processedDaily: any[], processedWeekly: any[], time: string, now: number) => {
+    const result = checkStrategy1H(processed4h);
+    const div = calculateRSIDivergence(processed4h);
     const rsiDaily = processedDaily.length > 0 ? processedDaily[processedDaily.length - 1].rsi : null;
+    const rsiWeekly = processedWeekly.length > 0 ? processedWeekly[processedWeekly.length - 1].rsi : null;
 
     // Calculate RSI Daily Slope (last 2 candles)
     let rsiDailySlope: '+' | '-' | '0' = '0';
@@ -117,12 +119,12 @@ export const useStrategyScanner = () => {
       else if (currentMACD < prevMACD) macdDailySlope = '-';
     }
 
-    // Detect Stochastic Cross in 1H (last 2 pairs of candles)
+    // Detect Stochastic Cross in 4H (last 2 pairs of candles)
     let stochCross: 'up' | 'down' | null = null;
-    if (processed1h.length >= 3) {
-      for (let i = processed1h.length - 1; i >= processed1h.length - 2; i--) {
-        const curr = processed1h[i];
-        const prev = processed1h[i - 1];
+    if (processed4h.length >= 3) {
+      for (let i = processed4h.length - 1; i >= processed4h.length - 2; i--) {
+        const curr = processed4h[i];
+        const prev = processed4h[i - 1];
         if (prev.stochK! <= prev.stochD! && curr.stochK! > curr.stochD!) {
           stochCross = 'up';
           break;
@@ -134,8 +136,8 @@ export const useStrategyScanner = () => {
       }
     }
 
-    const lastPoint = processed1h[processed1h.length - 1];
-    const prevPoint = processed1h[processed1h.length - 2];
+    const lastPoint = processed4h[processed4h.length - 1];
+    const prevPoint = processed4h[processed4h.length - 2];
 
     statusMap.current[asset.symbol] = {
       symbol: asset.symbol,
@@ -181,7 +183,7 @@ export const useStrategyScanner = () => {
         price: lastPrice,
         time,
         message: result.reason,
-        timeframe: '1H',
+        timeframe: '4H',
         rsi: result.rsi,
         hist: result.hist,
         stochK: result.stochK,
@@ -208,23 +210,25 @@ export const useStrategyScanner = () => {
           continue;
         }
 
-        // ── Fetch 1H and Daily candles
-        const [history, historyDly] = await Promise.all([
-          marketService.fetchHistory(asset.id, '60d', '1h'),
-          marketService.fetchHistory(asset.id, 'max', '1d')
+        // ── Fetch 4H, Daily and Weekly candles
+        const [history4, historyDly, historyWkly] = await Promise.all([
+          marketService.fetchHistory(asset.id, '2y', '4h'),
+          marketService.fetchHistory(asset.id, 'max', '1d'),
+          marketService.fetchHistory(asset.id, 'max', '1wk')
         ]);
 
-        if (!history || history.length < 35) continue;
+        if (!history4 || history4.length < 35) continue;
 
-        const processed = processIndicators(history);
+        const processed = processIndicators(history4);
         const processedDaily = historyDly ? processIndicators(historyDly) : [];
+        const processedWeekly = historyWkly ? processIndicators(historyWkly) : [];
 
         const time = new Date().toLocaleTimeString('es-CO', {
           hour: '2-digit',
           minute: '2-digit',
         });
 
-        calculateAssetStatus(asset, processed, processedDaily, time, now);
+        calculateAssetStatus(asset, processed, processedDaily, processedWeekly, time, now);
 
         lastChecked.current[asset.symbol] = now;
       } catch (err) {
@@ -274,7 +278,7 @@ export const useStrategyScanner = () => {
 
   // Live update effect for the selected asset
   useEffect(() => {
-    if (!history1h.length || !historyDaily.length || !selectedAsset) return;
+    if (!history4h.length || !historyDaily.length || !historyWeekly.length || !selectedAsset) return;
 
     const time = new Date().toLocaleTimeString('es-CO', {
       hour: '2-digit',
@@ -282,6 +286,6 @@ export const useStrategyScanner = () => {
     });
     const now = Date.now();
 
-    calculateAssetStatus(selectedAsset, history1h, historyDaily, time, now);
-  }, [history1h, historyDaily, selectedAsset, calculateAssetStatus]);
+    calculateAssetStatus(selectedAsset, history4h, historyDaily, historyWeekly, time, now);
+  }, [history4h, historyDaily, historyWeekly, selectedAsset, calculateAssetStatus]);
 };

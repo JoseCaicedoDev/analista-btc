@@ -45,4 +45,16 @@ export default defineConfig({
       },
     }),
   ],
+  server: {
+    proxy: {
+      '/api/market': {
+        target: 'http://localhost:4701',
+        changeOrigin: true,
+      },
+      '/ws': {
+        target: 'ws://localhost:4701',
+        ws: true,
+      }
+    }
+  }
 });

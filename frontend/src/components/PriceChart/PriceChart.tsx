@@ -1,5 +1,5 @@
 import React from 'react';
-import { ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip, Bar, ComposedChart, Cell, Line } from 'recharts';
+import { ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip, Bar, ComposedChart, Line } from 'recharts';
 import { calculateRSIDivergence } from '../../domain/indicators';
 import type { DataPoint } from '../../domain/indicators';
 

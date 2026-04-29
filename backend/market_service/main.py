@@ -17,7 +17,7 @@ app.add_middleware(
 
 service = YFinanceService()
 
-@app.get("/api/market/assets")
+@app.get("/assets")
 async def get_assets():
     try:
         config_path = "/app/config/token.json"
@@ -29,7 +29,7 @@ async def get_assets():
         print(f"Error reading token configuration: {e}")
         return []
 
-@app.get("/api/market/etfs")
+@app.get("/etfs")
 async def get_etfs():
     try:
         config_path = "/app/config/etf.json"
@@ -41,7 +41,7 @@ async def get_etfs():
         print(f"Error reading ETF configuration: {e}")
         return []
 
-@app.get("/api/market/{ticker}/history")
+@app.get("/{ticker}/history")
 async def get_history(ticker: str, period: str = "1mo", interval: str = "1h"):
     return service.get_history(ticker, period, interval)
 

@@ -220,7 +220,6 @@ export const useStrategyScanner = () => {
 
         const processed = processIndicators(history4);
         const processedDaily = historyDly ? processIndicators(historyDly) : [];
-        const processedWeekly = historyWkly ? processIndicators(historyWkly) : [];
 
         const time = new Date().toLocaleTimeString('es-CO', {
           hour: '2-digit',

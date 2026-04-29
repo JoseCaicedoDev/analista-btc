@@ -14,6 +14,8 @@ export interface DataPoint {
   ema200?: number;
   stochK?: number;
   stochD?: number;
+  volume?: number;
+  volEma?: number;
 }
 
 export const calculateSMA = (data: (number | undefined | null)[], period: number): (number | null)[] => {
@@ -174,6 +176,7 @@ export const calculateStochRSI = (rsi: (number | null)[], lengthStoch: number, s
 
 export const processIndicators = (history: DataPoint[]): DataPoint[] => {
   const prices = history.map(d => d.price);
+  const volumes = history.map(d => d.volume ?? 0);
   if (prices.length < 2) return history;
   
   const rsi = calculateRSI(prices);
@@ -181,6 +184,7 @@ export const processIndicators = (history: DataPoint[]): DataPoint[] => {
   const { macdLine, signalLine, histogram, colors } = calculateMACD(prices);
   const ema200 = calculateEMA(prices, 200);
   const { kLine, dLine } = calculateStochRSI(rsi, 14, 3, 3);
+  const volEma = calculateEMA(volumes, 20);
   
   return history.map((d, i) => ({
     ...d,
@@ -192,80 +196,151 @@ export const processIndicators = (history: DataPoint[]): DataPoint[] => {
     histColor: colors[i],
     ema200: ema200[i] ?? undefined,
     stochK: kLine[i] ?? undefined,
-    stochD: dLine[i] ?? undefined
+    stochD: dLine[i] ?? undefined,
+    volEma: volEma[i] ?? undefined
   }));
 };
 export const calculateRSIDivergence = (history: DataPoint[]) => {
   if (history.length < 50) return { type: 'none', value: 0 };
   
-  const rsiValues = calculateRSI(history.map(d => d.price), 21);
   const len = history.length;
-  
-  const isPivotLow = (index: number) => {
-    if (index < 5 || index > len - 6) return false;
-    const val = rsiValues[index];
-    if (val === null) return false;
-    for (let i = 1; i <= 5; i++) {
-        const prev = rsiValues[index - i];
-        const next = rsiValues[index + i];
-        if (prev === null || next === null || val >= prev || val >= next) return false;
-    }
-    return true;
-  };
+  const pivotPeriod = 5;
 
   const isPivotHigh = (index: number) => {
-    if (index < 5 || index > len - 6) return false;
-    const val = rsiValues[index];
-    if (val === null) return false;
-    for (let i = 1; i <= 5; i++) {
-        const prev = rsiValues[index - i];
-        const next = rsiValues[index + i];
-        if (prev === null || next === null || val <= prev || val <= next) return false;
+    if (index < pivotPeriod || index > len - 1 - pivotPeriod) return false;
+    const val = history[index].rsi;
+    if (val === undefined) return false;
+    for (let i = 1; i <= pivotPeriod; i++) {
+        const prev = history[index - i].rsi;
+        const next = history[index + i].rsi;
+        if (prev === undefined || next === undefined) return false;
+        if (val <= prev || val <= next) return false;
     }
     return true;
   };
 
-  // Regular Bullish Divergence
-  let lastPivotIdx = -1;
-  for (let i = len - 6; i > len - 40; i--) {
-    if (isPivotLow(i)) {
-      if (lastPivotIdx === -1) {
-        lastPivotIdx = i;
-      } else {
-        const currentPrice = history[lastPivotIdx].price;
-        const prevPrice = history[i].price;
-        const currentRSI = rsiValues[lastPivotIdx]!;
-        const prevRSI = rsiValues[i]!;
-        
-        if (currentPrice < prevPrice && currentRSI > prevRSI) {
-          return { type: 'bullish', value: currentRSI };
-        }
-        break;
-      }
+  const isPivotLow = (index: number) => {
+    if (index < pivotPeriod || index > len - 1 - pivotPeriod) return false;
+    const val = history[index].rsi;
+    if (val === undefined) return false;
+    for (let i = 1; i <= pivotPeriod; i++) {
+        const prev = history[index - i].rsi;
+        const next = history[index + i].rsi;
+        if (prev === undefined || next === undefined) return false;
+        if (val >= prev || val >= next) return false;
     }
-  }
+    return true;
+  };
 
-  // Regular Bearish Divergence
-  lastPivotIdx = -1;
-  for (let i = len - 6; i > len - 40; i--) {
+  let lastPivotHighIdx = -1;
+  let prevPivotHighIdx = -1;
+  
+  for (let i = len - 1 - pivotPeriod; i >= pivotPeriod; i--) {
     if (isPivotHigh(i)) {
-      if (lastPivotIdx === -1) {
-        lastPivotIdx = i;
-      } else {
-        const currentPrice = history[lastPivotIdx].price;
-        const prevPrice = history[i].price;
-        const currentRSI = rsiValues[lastPivotIdx]!;
-        const prevRSI = rsiValues[i]!;
-        
-        if (currentPrice > prevPrice && currentRSI < prevRSI) {
-          return { type: 'bearish', value: currentRSI };
-        }
+      if (lastPivotHighIdx === -1) {
+        lastPivotHighIdx = i;
+      } else if (prevPivotHighIdx === -1) {
+        prevPivotHighIdx = i;
         break;
       }
     }
   }
 
-  return { type: 'none', value: rsiValues[len - 1] ?? 50 };
+  let lastPivotLowIdx = -1;
+  let prevPivotLowIdx = -1;
+
+  for (let i = len - 1 - pivotPeriod; i >= pivotPeriod; i--) {
+    if (isPivotLow(i)) {
+      if (lastPivotLowIdx === -1) {
+        lastPivotLowIdx = i;
+      } else if (prevPivotLowIdx === -1) {
+        prevPivotLowIdx = i;
+        break;
+      }
+    }
+  }
+
+  if (lastPivotHighIdx !== -1 && prevPivotHighIdx !== -1) {
+    // Buscar el máximo real del precio en una ventana de +/- 3 velas alrededor del pivot del RSI
+    const getLocalHighInfo = (idx: number) => {
+      const start = Math.max(0, idx - 3);
+      const end = Math.min(len - 1, idx + 3);
+      let max = -Infinity;
+      let time = history[idx].time;
+      for (let j = start; j <= end; j++) {
+        const val = history[j].high ?? history[j].price;
+        if (val > max) {
+          max = val;
+          time = history[j].time;
+        }
+      }
+      return { price: max, time };
+    };
+
+    const curInfo = getLocalHighInfo(lastPivotHighIdx);
+    const prevInfo = getLocalHighInfo(prevPivotHighIdx);
+    
+    if (curInfo.price > prevInfo.price) {
+      const curRSI = history[lastPivotHighIdx].rsi ?? 50;
+      const prevRSI = history[prevPivotHighIdx].rsi ?? 50;
+      const curVolEma = history[lastPivotHighIdx].volEma ?? 0;
+      const prevVolEma = history[prevPivotHighIdx].volEma ?? 0;
+      
+      if (curRSI < prevRSI) {
+        return { 
+          type: 'bearish', 
+          value: curRSI,
+          p1: { time: prevInfo.time, price: prevInfo.price, rsi: prevRSI },
+          p2: { time: curInfo.time, price: curInfo.price, rsi: curRSI }
+        };
+      }
+      if (curVolEma < prevVolEma) {
+        return { 
+          type: 'bearish_vol', 
+          value: curRSI,
+          p1: { time: prevInfo.time, price: prevInfo.price, rsi: prevRSI },
+          p2: { time: curInfo.time, price: curInfo.price, rsi: curRSI }
+        };
+      }
+    }
+  }
+
+  if (lastPivotLowIdx !== -1 && prevPivotLowIdx !== -1) {
+    // Buscar el mínimo real del precio en una ventana de +/- 3 velas alrededor del pivot del RSI
+    const getLocalLowInfo = (idx: number) => {
+      const start = Math.max(0, idx - 3);
+      const end = Math.min(len - 1, idx + 3);
+      let min = Infinity;
+      let time = history[idx].time;
+      for (let j = start; j <= end; j++) {
+        const val = history[j].low ?? history[j].price;
+        if (val < min) {
+          min = val;
+          time = history[j].time;
+        }
+      }
+      return { price: min, time };
+    };
+
+    const curInfo = getLocalLowInfo(lastPivotLowIdx);
+    const prevInfo = getLocalLowInfo(prevPivotLowIdx);
+    
+    if (curInfo.price < prevInfo.price) {
+      const curRSI = history[lastPivotLowIdx].rsi ?? 50;
+      const prevRSI = history[prevPivotLowIdx].rsi ?? 50;
+      
+      if (curRSI > prevRSI) {
+        return { 
+          type: 'bullish', 
+          value: curRSI,
+          p1: { time: prevInfo.time, price: prevInfo.price, rsi: prevRSI },
+          p2: { time: curInfo.time, price: curInfo.price, rsi: curRSI }
+        };
+      }
+    }
+  }
+
+  return { type: 'none', value: history[len - 1]?.rsi ?? 50 };
 };
 
 export interface StrategyResult {

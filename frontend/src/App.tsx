@@ -1,6 +1,7 @@
 import React from 'react';
 import { useMarketData } from './hooks/useMarketData';
 import { useStrategyScanner } from './hooks/useStrategyScanner';
+import { useMarketStore } from './store/useMarketStore';
 import { DashboardLayout } from './components/layout/DashboardLayout';
 import { PriceMonitor } from './components/dashboard/PriceMonitor';
 import { StatusMatrix } from './components/dashboard/StatusMatrix';

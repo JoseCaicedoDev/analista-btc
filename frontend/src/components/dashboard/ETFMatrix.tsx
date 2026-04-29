@@ -1,6 +1,6 @@
 import React from 'react';
 import { useMarketStore } from '../../store/useMarketStore';
-import { cn } from '../../lib/utils';
+import { cn } from '../../utils/cn';
 import { TrendingUp, Activity, Zap } from 'lucide-react';
 
 export const ETFMatrix: React.FC = () => {

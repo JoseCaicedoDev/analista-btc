@@ -60,7 +60,7 @@ export const RSIChart: React.FC<RSIChartProps> = ({ data: propData, syncId }) =>
 
             {/* RSI MA (Amber) */}
             <Area
-              type="monotone"
+              type="linear"
               dataKey="rsiMA"
               stroke="#f59e0b"
               strokeWidth={1}
@@ -71,7 +71,7 @@ export const RSIChart: React.FC<RSIChartProps> = ({ data: propData, syncId }) =>
             />
             {/* RSI Line (Violet) with Area Fill */}
             <Area
-              type="monotone"
+              type="linear"
               dataKey="rsi"
               stroke="#8b5cf6"
               strokeWidth={2}

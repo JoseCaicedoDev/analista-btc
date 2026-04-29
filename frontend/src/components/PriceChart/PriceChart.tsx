@@ -1,5 +1,5 @@
 import React from 'react';
-import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Bar, ComposedChart } from 'recharts';
+import { ResponsiveContainer, Area, XAxis, YAxis, CartesianGrid, Tooltip, Bar, ComposedChart } from 'recharts';
 import type { DataPoint } from '../../domain/indicators';
 
 interface PriceChartProps {

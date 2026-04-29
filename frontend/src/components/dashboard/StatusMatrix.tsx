@@ -71,6 +71,27 @@ export const StatusMatrix: React.FC = () => {
                       </div>
                     </div>
 
+                    {/* Badge RSI (WEEKLY) */}
+                    <div className={cn(
+                      "flex items-center px-2.5 py-1 rounded-full border text-[11px] font-black whitespace-nowrap",
+                      (s.rsiWeekly || 0) > 70 ? "bg-rose-500/10 border-rose-500/20 text-rose-400" :
+                        (s.rsiWeekly || 0) < 30 ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" :
+                          "bg-blue-500/10 border-blue-500/20 text-blue-400"
+                    )}>
+                      <span className="mr-1.5 opacity-70">RSI W</span>
+                      <div className="flex items-center gap-1.5">
+                        <span>{s.rsiWeekly?.toFixed(1) || '--'}</span>
+                        <span className={cn(
+                          "text-[10px]",
+                          s.rsiWeeklySlope === '+' ? "text-emerald-400" :
+                            s.rsiWeeklySlope === '-' ? "text-rose-400" :
+                              "text-gray-500"
+                        )}>
+                          ({s.rsiWeeklySlope})
+                        </span>
+                      </div>
+                    </div>
+
                     {/* Badge MACD (DAILY) */}
                     {(() => {
                       const macdDaily = getMACDStatus(s.macdHistColorDaily);

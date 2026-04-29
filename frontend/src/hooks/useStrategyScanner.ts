@@ -33,6 +33,8 @@ export type TokenScanStatus = {
   rsi: number | null;
   rsiDaily: number | null;
   rsiDailySlope: '+' | '-' | '0';
+  rsiWeekly: number | null;
+  rsiWeeklySlope: '+' | '-' | '0';
   hist: number | null;
   macdHistColorDaily: string | null;
   macdDailySlope: '+' | '-' | '0';
@@ -93,10 +95,11 @@ export const useStrategyScanner = () => {
     }
   }, [isAlarmActive]);
 
-  const calculateAssetStatus = useCallback((asset: any, processed4h: any[], processedDaily: any[], time: string, now: number) => {
+  const calculateAssetStatus = useCallback((asset: any, processed4h: any[], processedDaily: any[], processedWeekly: any[], time: string, now: number) => {
     const result = checkStrategy1H(processed4h);
     const div = calculateRSIDivergence(processed4h);
     const rsiDaily = processedDaily.length > 0 ? processedDaily[processedDaily.length - 1].rsi : null;
+    const rsiWeekly = processedWeekly.length > 0 ? processedWeekly[processedWeekly.length - 1].rsi : null;
 
     // Calculate RSI Daily Slope (last 2 candles)
     let rsiDailySlope: '+' | '-' | '0' = '0';
@@ -105,6 +108,15 @@ export const useStrategyScanner = () => {
       const prevRSI = processedDaily[processedDaily.length - 2].rsi || 0;
       if (currentRSI > prevRSI) rsiDailySlope = '+';
       else if (currentRSI < prevRSI) rsiDailySlope = '-';
+    }
+
+    // Calculate RSI Weekly Slope (last 2 candles)
+    let rsiWeeklySlope: '+' | '-' | '0' = '0';
+    if (processedWeekly.length >= 2) {
+      const currentRSI = processedWeekly[processedWeekly.length - 1].rsi || 0;
+      const prevRSI = processedWeekly[processedWeekly.length - 2].rsi || 0;
+      if (currentRSI > prevRSI) rsiWeeklySlope = '+';
+      else if (currentRSI < prevRSI) rsiWeeklySlope = '-';
     }
 
     const macdHistColorDaily = processedDaily.length > 0 ? processedDaily[processedDaily.length - 1].histColor : null;
@@ -145,6 +157,8 @@ export const useStrategyScanner = () => {
       rsi: result.rsi ?? null,
       rsiDaily: rsiDaily ?? null,
       rsiDailySlope,
+      rsiWeekly: rsiWeekly ?? null,
+      rsiWeeklySlope,
       macdHistColorDaily: macdHistColorDaily ?? null,
       macdDailySlope,
       stochK: result.stochK ?? null,
@@ -220,13 +234,14 @@ export const useStrategyScanner = () => {
 
         const processed = processIndicators(history4);
         const processedDaily = historyDly ? processIndicators(historyDly) : [];
+        const processedWeekly = historyWkly ? processIndicators(historyWkly) : [];
 
         const time = new Date().toLocaleTimeString('es-CO', {
           hour: '2-digit',
           minute: '2-digit',
         });
 
-        calculateAssetStatus(asset, processed, processedDaily, time, now);
+        calculateAssetStatus(asset, processed, processedDaily, processedWeekly, time, now);
 
         lastChecked.current[asset.symbol] = now;
       } catch (err) {
@@ -249,6 +264,8 @@ export const useStrategyScanner = () => {
           rsi: null,
           rsiDaily: null,
           rsiDailySlope: '0',
+          rsiWeekly: null,
+          rsiWeeklySlope: '0',
           macdHistColorDaily: null,
           macdDailySlope: '0',
           hist: null,
@@ -284,6 +301,6 @@ export const useStrategyScanner = () => {
     });
     const now = Date.now();
 
-    calculateAssetStatus(selectedAsset, history4h, historyDaily, time, now);
+    calculateAssetStatus(selectedAsset, history4h, historyDaily, historyWeekly, time, now);
   }, [history4h, historyDaily, historyWeekly, selectedAsset, calculateAssetStatus]);
 };

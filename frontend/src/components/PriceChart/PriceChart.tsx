@@ -68,10 +68,30 @@ export const PriceChart: React.FC<PriceChartProps> = ({ data: propData, syncId }
               cursor={{ stroke: '#38bdf8', strokeWidth: 1, strokeDasharray: '4 4' }}
             />
             
-            {/* Mechas (Wicks) - Usamos una barra muy delgada */}
-            <Bar dataKey="wick" isAnimationActive={false} barSize={1}>
+            {/* Mechas (Wicks) - Usamos una barra del mismo ancho que el cuerpo pero dibujamos solo el centro */}
+            <Bar 
+              dataKey="wick" 
+              isAnimationActive={false} 
+              barSize={6}
+              shape={(props: any) => {
+                const { x, y, width, height, fill } = props;
+                // Dibujamos una línea de 1px en el centro exacto de la barra de 6px
+                return (
+                  <rect 
+                    x={x + (width / 2) - 0.5} 
+                    y={y} 
+                    width={1} 
+                    height={height} 
+                    fill={fill} 
+                  />
+                );
+              }}
+            >
               {data.map((entry, index) => (
-                <Cell key={`wick-${index}`} fill={entry.color} />
+                <Cell 
+                  key={`wick-${index}`} 
+                  fill={entry.color} 
+                />
               ))}
             </Bar>
 
@@ -92,13 +112,6 @@ export const PriceChart: React.FC<PriceChartProps> = ({ data: propData, syncId }
                 dot={{ r: 4, fill: divColor, strokeWidth: 2, stroke: '#000' }}
                 connectNulls
                 isAnimationActive={false}
-                label={{
-                  position: 'top',
-                  fill: divColor,
-                  fontSize: 10,
-                  fontWeight: 'bold',
-                  formatter: () => div.type === 'bullish' ? 'DIV' : 'DIV'
-                }}
               />
             )}
           </ComposedChart>

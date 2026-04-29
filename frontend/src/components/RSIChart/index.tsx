@@ -1,5 +1,6 @@
 import React from 'react';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, ReferenceLine, ResponsiveContainer, Tooltip } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, ReferenceLine, ResponsiveContainer, Tooltip, Line, ComposedChart } from 'recharts';
+import { calculateRSIDivergence } from '../../domain/indicators';
 import type { DataPoint } from '../../domain/indicators';
 
 interface RSIChartProps {
@@ -11,13 +12,25 @@ interface RSIChartProps {
 
 export const RSIChart: React.FC<RSIChartProps> = ({ data: propData, syncId }) => {
   // Limitar a los últimos 50 puntos
-  const data = propData.slice(-50);
+  const rawData = propData.slice(-50);
+
+  const div = calculateRSIDivergence(propData);
+  const data = rawData.map(d => {
+    const isP1 = div.p1?.time === d.time;
+    const isP2 = div.p2?.time === d.time;
+    return {
+      ...d,
+      divLineRSI: (isP1 || isP2) ? (isP1 ? div.p1?.rsi : div.p2?.rsi) : null
+    };
+  });
+
+  const divColor = div.type === 'bullish' ? '#10b981' : (div.type === 'bearish' ? '#f43f5e' : '#f59e0b');
 
   return (
     <div className="w-full h-full min-h-0 flex flex-col group">
       <div className="flex-1 min-h-0">
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={data} syncId={syncId}>
+          <ComposedChart data={data} syncId={syncId}>
             <defs>
               <linearGradient id="colorRsi" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.1}/>
@@ -68,7 +81,20 @@ export const RSIChart: React.FC<RSIChartProps> = ({ data: propData, syncId }) =>
               isAnimationActive={false}
               name="RSI"
             />
-          </AreaChart>
+
+            {/* Línea de Divergencia RSI */}
+            {div.type !== 'none' && (
+              <Line
+                type="linear"
+                dataKey="divLineRSI"
+                stroke={divColor}
+                strokeWidth={2}
+                dot={{ r: 4, fill: divColor, strokeWidth: 2, stroke: '#000' }}
+                connectNulls
+                isAnimationActive={false}
+              />
+            )}
+          </ComposedChart>
         </ResponsiveContainer>
       </div>
     </div>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip, Bar, ComposedChart, Cell } from 'recharts';
+import { ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip, Bar, ComposedChart, Cell, Line } from 'recharts';
 import type { DataPoint } from '../../domain/indicators';
 
 interface PriceChartProps {
@@ -12,16 +12,22 @@ export const PriceChart: React.FC<PriceChartProps> = ({ data: propData, syncId }
   // Limitar a los últimos 50 puntos
   const rawData = propData.slice(-50);
 
-  // Transformar datos para velas
-  const data = rawData.map(d => ({
-    ...d,
-    // La vela se compone de dos partes en Recharts: el cuerpo y la mecha
-    // El cuerpo va de open a close
-    body: [d.open ?? 0, d.close ?? 0],
-    // La mecha va de low a high
-    wick: [d.low ?? 0, d.high ?? 0],
-    color: (d.close ?? 0) >= (d.open ?? 0) ? '#10b981' : '#ef4444'
-  }));
+  // Transformar datos para velas y divergencias
+  const div = calculateRSIDivergence(propData);
+  const data = rawData.map(d => {
+    const isP1 = div.p1?.time === d.time;
+    const isP2 = div.p2?.time === d.time;
+    
+    return {
+      ...d,
+      body: [d.open ?? 0, d.close ?? 0],
+      wick: [d.low ?? 0, d.high ?? 0],
+      color: (d.close ?? 0) >= (d.open ?? 0) ? '#10b981' : '#ef4444',
+      divLine: (isP1 || isP2) ? (isP1 ? div.p1?.price : div.p2?.price) : null
+    };
+  });
+
+  const divColor = div.type === 'bullish' ? '#10b981' : (div.type === 'bearish' ? '#f43f5e' : '#f59e0b');
 
   return (
     <div className="w-full h-full min-h-0 flex flex-col group">
@@ -74,6 +80,26 @@ export const PriceChart: React.FC<PriceChartProps> = ({ data: propData, syncId }
                 <Cell key={`body-${index}`} fill={entry.color} />
               ))}
             </Bar>
+
+            {/* Línea de Divergencia */}
+            {div.type !== 'none' && (
+              <Line
+                type="linear"
+                dataKey="divLine"
+                stroke={divColor}
+                strokeWidth={2}
+                dot={{ r: 4, fill: divColor, strokeWidth: 2, stroke: '#000' }}
+                connectNulls
+                isAnimationActive={false}
+                label={{
+                  position: 'top',
+                  fill: divColor,
+                  fontSize: 10,
+                  fontWeight: 'bold',
+                  formatter: () => div.type === 'bullish' ? 'DIV' : 'DIV'
+                }}
+              />
+            )}
           </ComposedChart>
         </ResponsiveContainer>
       </div>

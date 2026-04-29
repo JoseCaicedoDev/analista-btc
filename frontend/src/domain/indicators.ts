@@ -267,10 +267,20 @@ export const calculateRSIDivergence = (history: DataPoint[]) => {
       const prevVolEma = history[prevPivotHighIdx].volEma ?? 0;
       
       if (curRSI < prevRSI) {
-        return { type: 'bearish', value: curRSI };
+        return { 
+          type: 'bearish', 
+          value: curRSI,
+          p1: { time: history[prevPivotHighIdx].time, price: prevPrice, rsi: prevRSI },
+          p2: { time: history[lastPivotHighIdx].time, price: curPrice, rsi: curRSI }
+        };
       }
       if (curVolEma < prevVolEma) {
-        return { type: 'bearish_vol', value: curRSI };
+        return { 
+          type: 'bearish_vol', 
+          value: curRSI,
+          p1: { time: history[prevPivotHighIdx].time, price: prevPrice, rsi: prevRSI },
+          p2: { time: history[lastPivotHighIdx].time, price: curPrice, rsi: curRSI }
+        };
       }
     }
   }
@@ -284,7 +294,12 @@ export const calculateRSIDivergence = (history: DataPoint[]) => {
       const prevRSI = history[prevPivotLowIdx].rsi ?? 50;
       
       if (curRSI > prevRSI) {
-        return { type: 'bullish', value: curRSI };
+        return { 
+          type: 'bullish', 
+          value: curRSI,
+          p1: { time: history[prevPivotLowIdx].time, price: prevPrice, rsi: prevRSI },
+          p2: { time: history[lastPivotLowIdx].time, price: curPrice, rsi: curRSI }
+        };
       }
     }
   }

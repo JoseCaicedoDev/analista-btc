@@ -93,7 +93,7 @@ export const useStrategyScanner = () => {
     }
   }, [isAlarmActive]);
 
-  const calculateAssetStatus = useCallback((asset: any, processed4h: any[], processedDaily: any[], processedWeekly: any[], time: string, now: number) => {
+  const calculateAssetStatus = useCallback((asset: any, processed4h: any[], processedDaily: any[], time: string, now: number) => {
     const result = checkStrategy1H(processed4h);
     const div = calculateRSIDivergence(processed4h);
     const rsiDaily = processedDaily.length > 0 ? processedDaily[processedDaily.length - 1].rsi : null;
@@ -227,7 +227,7 @@ export const useStrategyScanner = () => {
           minute: '2-digit',
         });
 
-        calculateAssetStatus(asset, processed, processedDaily, processedWeekly, time, now);
+        calculateAssetStatus(asset, processed, processedDaily, time, now);
 
         lastChecked.current[asset.symbol] = now;
       } catch (err) {
@@ -285,6 +285,6 @@ export const useStrategyScanner = () => {
     });
     const now = Date.now();
 
-    calculateAssetStatus(selectedAsset, history4h, historyDaily, historyWeekly, time, now);
+    calculateAssetStatus(selectedAsset, history4h, historyDaily, time, now);
   }, [history4h, historyDaily, historyWeekly, selectedAsset, calculateAssetStatus]);
 };

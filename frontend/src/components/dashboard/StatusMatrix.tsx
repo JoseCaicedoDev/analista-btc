@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { subscribeScanStatus, type TokenScanStatus } from '../../hooks/useStrategyScanner';
 import { Card } from '../shared/Card';
-import { Target, Activity, ArrowUp, ArrowDown, Zap } from 'lucide-react';
+import { Target, Activity, ArrowUp, ArrowDown, Zap, BarChart3 } from 'lucide-react';
+import { MiniHistogram } from '../shared/MiniHistogram';
 
 export const StatusMatrix: React.FC = () => {
   const [statuses, setStatuses] = useState<Record<string, TokenScanStatus>>({});
@@ -100,6 +101,12 @@ export const StatusMatrix: React.FC = () => {
                         </div>
                       );
                     })()}
+
+                    {/* Momentum MiniChart */}
+                    <div className="flex items-center px-2 py-0.5 rounded-full border border-slate-800/50 bg-slate-900/40">
+                       <BarChart3 size={10} className="mr-1.5 text-slate-500" />
+                       <MiniHistogram data={s.histHistory} />
+                    </div>
 
                     {/* Badge STOCH */}
                     <div className={cn(

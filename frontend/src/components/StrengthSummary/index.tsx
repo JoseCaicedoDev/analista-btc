@@ -2,6 +2,7 @@ import React from 'react';
 import { Zap } from 'lucide-react';
 import { useMarketStore } from '../../store/useMarketStore';
 import { calculateRSIDivergence } from '../../domain/indicators';
+import { MiniHistogram } from '../shared/MiniHistogram';
 
 export const StrengthSummary: React.FC = () => {
   const { history4h, historyDaily, historyWeekly } = useMarketStore();
@@ -21,13 +22,19 @@ export const StrengthSummary: React.FC = () => {
       color = 'text-orange-500';
       bg = 'bg-orange-500/10';
     }
+    
+    const histData = history.slice(-12).map(p => ({
+      hist: p.hist ?? 0,
+      color: p.histColor || '#334155'
+    }));
 
     return {
       label,
       value: div.value.toFixed(1),
       status: div.type === 'none' ? 'NEUTRAL' : div.type.toUpperCase(),
       color,
-      bg
+      bg,
+      histData
     };
   };
 
@@ -50,6 +57,7 @@ export const StrengthSummary: React.FC = () => {
             <div className="flex items-center gap-3">
               <span className="text-[9px] font-bold text-slate-500 w-5">{row.label}</span>
               <span className="text-sm font-black text-blue-400 font-mono tracking-tighter">{row.value}</span>
+              <MiniHistogram data={row.histData} width={35} height={14} barWidth={2} />
             </div>
             <span className={`text-[8px] font-black tracking-widest ${row.color}`}>
               {row.status === 'BULLISH' ? 'ALCISTA' : row.status === 'BEARISH' ? 'BAJISTA' : row.status === 'BEARISH_VOL' ? 'BAJISTA (VOL)' : 'NEUTRAL'}

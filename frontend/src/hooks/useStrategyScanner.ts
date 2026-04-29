@@ -46,6 +46,7 @@ export type TokenScanStatus = {
   alert: boolean;
   alertType: 'long' | 'short' | 'neutral' | 'none';
   divergence: 'bullish' | 'bearish' | 'bearish_vol' | 'none';
+  histHistory: { hist: number; color: string }[];
   lastScanned: string;
 };
 
@@ -137,6 +138,11 @@ export const useStrategyScanner = () => {
     const lastPoint = processed1h[processed1h.length - 1];
     const prevPoint = processed1h[processed1h.length - 2];
 
+    const histHistory = processed1h.slice(-12).map(p => ({
+      hist: p.hist ?? 0,
+      color: p.histColor || '#334155'
+    }));
+
     statusMap.current[asset.symbol] = {
       symbol: asset.symbol,
       name: asset.name,
@@ -157,6 +163,7 @@ export const useStrategyScanner = () => {
       alert: result.signal !== 'none',
       alertType: result.signal,
       divergence: div.type as any,
+      histHistory,
       lastScanned: time,
     };
 
@@ -260,6 +267,7 @@ export const useStrategyScanner = () => {
           alert: false,
           alertType: 'none',
           divergence: 'none',
+          histHistory: [],
           lastScanned: '--:--',
         };
       }

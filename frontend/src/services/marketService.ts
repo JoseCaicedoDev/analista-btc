@@ -9,7 +9,7 @@ const intervalMap: Record<string, string> = {
   '1wk': '1w',
 };
 
-const MARKET_API = `http://${window.location.hostname}:4701/api/market`;
+const MARKET_API = `/api/market`;
 
 export const marketService = {
   fetchHistory: async (ticker: string, _period: string, interval: string) => {

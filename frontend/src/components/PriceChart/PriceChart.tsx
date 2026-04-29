@@ -41,11 +41,23 @@ export const PriceChart: React.FC<PriceChartProps> = ({ data: propData, syncId }
             <Tooltip
               contentStyle={{ backgroundColor: '#08090a', border: '1px solid #1f2937', borderRadius: '12px', fontSize: '10px' }}
               labelFormatter={(t) => new Date(Number(t) * 1000).toLocaleString([], { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
-              formatter={(v: any, name) => {
-                if (Array.isArray(v)) return [`O: ${v[0]} C: ${v[1]}`, 'Vela'];
-                return [Number(v).toLocaleString(), name];
+              formatter={(v: any, name, props) => {
+                // props.payload contains the full data point
+                const d = props.payload;
+                if (name === 'body') {
+                  return [
+                    <div className="flex flex-col gap-1 text-gray-200">
+                      <div className="flex justify-between gap-4"><span>O:</span> <span className="text-white font-mono">{d.open?.toFixed(2)}</span></div>
+                      <div className="flex justify-between gap-4"><span>H:</span> <span className="text-white font-mono">{d.high?.toFixed(2)}</span></div>
+                      <div className="flex justify-between gap-4"><span>L:</span> <span className="text-white font-mono">{d.low?.toFixed(2)}</span></div>
+                      <div className="flex justify-between gap-4"><span>C:</span> <span className="text-white font-mono">{d.close?.toFixed(2)}</span></div>
+                    </div>,
+                    null
+                  ];
+                }
+                return [null, null];
               }}
-              itemStyle={{ fontSize: '10px', fontWeight: 'bold', padding: '2px 0' }}
+              itemStyle={{ color: '#f3f4f6', fontSize: '10px', fontWeight: 'bold' }}
               cursor={{ stroke: '#38bdf8', strokeWidth: 1, strokeDasharray: '4 4' }}
             />
             

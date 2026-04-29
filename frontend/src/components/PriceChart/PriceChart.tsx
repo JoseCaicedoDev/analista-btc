@@ -62,15 +62,6 @@ export const PriceChart: React.FC<PriceChartProps> = ({ data: propData, syncId }
                 <Cell key={`body-${index}`} fill={entry.color} />
               ))}
             </Bar>
-
-            {/* Volume Bars at bottom (scaled down independently) */}
-            <Bar 
-              dataKey="volume" 
-              fill="#1f2937" 
-              opacity={0.2} 
-              isAnimationActive={false} 
-              name="Volumen"
-            />
           </ComposedChart>
         </ResponsiveContainer>
       </div>
